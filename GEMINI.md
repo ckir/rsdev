@@ -17,9 +17,14 @@ Monitors PostgreSQL instances defined in a central cloud configuration.
   - Sends JSON-formatted alerts to Primary and Failover webhook endpoints.
 - **Critical Implementation Details:**
   - **PgBouncer Compatibility:** Uses `simple_query` API to bypass prepared statements, which are incompatible with transaction poolers (e.g., Supabase port 6543).
-  - **Hybrid TLS Strategy:**
-    - **Supabase:** Uses `native-tls` with certificate verification disabled (`danger_accept_invalid_certs`) to resolve specific Windows trust store issues.
-    - **Standard:** Uses `rustls` with `webpki-roots` and `rustls-native-certs` for all other providers, enforcing ALPN `postgresql`.
+  - **Unified TLS Strategy:**
+    - Uses `rustls` for all connections to ensure cross-platform consistency and modern security.
+    - **Supabase Specifics:**
+      - Enforces `ssl_mode=require`.
+      - Uses a custom `NoVerifier` to disable certificate verification for Supabase connections. This is a pragmatic solution to bypass root certificate trust issues on Windows/Linux environments while maintaining encryption.
+    - **Standard Connections:**
+      - Uses `rustls` with `webpki-roots` and `rustls-native-certs` for full verification.
+      - Enforces ALPN `postgresql`.
 
 #### 2. `monitor_redis`
 Monitors Redis instances.
@@ -43,7 +48,7 @@ Monitors local internet connectivity.
 ## Tech Stack
 - **Runtime:** `tokio` (Async I/O)
 - **Database:** `tokio-postgres`, `redis`
-- **TLS:** `rustls`, `native-tls`, `tokio-postgres-rustls`, `postgres-native-tls`
+- **TLS:** `rustls`, `tokio-postgres-rustls`
 - **Logging:** `fern`, `log`
 - **HTTP Client:** `reqwest`
 - **Audio:** `rodio`

@@ -5,6 +5,13 @@
 - **Async by Default:** Use `tokio` for all I/O-bound tasks to ensure responsiveness, especially when monitoring multiple services.
 - **Secure Logging:** Never log raw connection strings or passwords. Always use masking functions (e.g., `mask_url_password`).
 
+## Local Development with `act`
+- When running GitHub Actions workflows locally using `act`, use the `--artifact-server-path` flag to persist artifacts:
+  ```bash
+  act --artifact-server-path ./artifacts
+  ```
+  This will store generated artifacts in the specified directory (e.g., `./artifacts`).
+
 ## PostgreSQL Monitoring (`monitor_postgres`)
 1.  **Connection Protocol:**
     - ALWAYS use `client.simple_query()` for health checks.
@@ -12,11 +19,14 @@
     - **Reason:** Supabase and other cloud providers often use PgBouncer in "transaction" mode, which does not support prepared statements.
 
 2.  **TLS / SSL Handling:**
-    - **Supabase:** Must use `native-tls` with `danger_accept_invalid_certs(true)`.
-        - *Context:* Windows trust stores often reject Supabase's certificate chain. Disabling verification is a pragmatic compromise for this specific monitoring context to ensure connectivity.
-    - **Other Providers:** Use `rustls` with `ssl_mode=require`.
-        - Configure ALPN to `postgresql`.
-        - Load system native certs (`rustls-native-certs`) and WebPKI roots (`webpki-roots`).
+    - **Unified Backend:** Use `rustls` for all connections. Do NOT use `native-tls`.
+    - **Supabase Strategy:**
+        - Detect Supabase URLs (containing "supabase.co" or "supabase.com").
+        - Force `ssl_mode=require`.
+        - **Disable Certificate Verification:** Use a custom `NoVerifier` to bypass certificate validation. This is necessary to resolve persistent trust store issues on Windows/Linux environments while ensuring the connection remains encrypted.
+    - **Standard Strategy:**
+        - For non-Supabase connections, use standard `rustls` verification with `webpki-roots` and `rustls-native-certs`.
+        - Enforce ALPN `postgresql`.
 
 3.  **Configuration:**
     - Prioritize `dbUrl` (connection string) over `dbConnection` objects.
@@ -32,8 +42,8 @@
 
 ## Logging
 - Use `fern` for logging configuration.
-- Log to both `stderr` and a file (e.g., `monitor_postgres.log`).
+- Log to both `stderr` and a daily rotating file (e.g., `monitor_postgres_YYYY-MM-DD.log`).
 - Format: `[YYYY-MM-DD HH:MM:SS][Target][Level] Message`
 
 ## Dependencies
-- Prefer pure-Rust implementations where possible (e.g., `rustls`), but fall back to native bindings (`native-tls`) when platform-specific compatibility issues arise (as seen with Supabase on Windows).
+- Prefer pure-Rust implementations (`rustls`) over native bindings (`native-tls`) to ensure consistent behavior across platforms and avoid system dependency issues (like OpenSSL versions).
