@@ -146,17 +146,19 @@ jobs:
           mkdir -p dist
           for f in target/release/*.exe; do cp "$f" "dist/$(basename "$f" .exe)-windows-x64.exe"; done
 
-      - name: Upload Artifacts to S3
-        uses: jakejarvis/s3-sync-action@master
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         continue-on-error: true
         with:
-          args: --acl public-read --follow-symlinks
-        env:
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          SOURCE_DIR: './dist'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload Artifacts to S3
+        shell: bash
+        continue-on-error: true
+        run: |
+          aws s3 sync ./dist s3://${{ secrets.AWS_S3_BUCKET }}/dist --acl public-read --follow-symlinks
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
