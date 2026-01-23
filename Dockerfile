@@ -55,11 +55,15 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Build all binaries in the workspace/project
-# Then find all executables and strip them to minimize host export size
-RUN cargo build --release --target x86_64-unknown-linux-musl && \
-    find target/x86_64-unknown-linux-musl/release/ -maxdepth 1 -type f -executable -exec strip {} +
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+# Create a temporary directory and copy only the executables there, then strip them
+RUN mkdir -p /tmp/binaries && \
+    find target/x86_64-unknown-linux-musl/release/ -maxdepth 1 -type f -executable \
+    -exec cp {} /tmp/binaries/ \; && \
+    find /tmp/binaries/ -maxdepth 1 -type f -executable -exec strip {} +
 
 # --- Stage 3: Exporter ---
 FROM scratch AS exporter
 # This captures all stripped binaries and exports them to your host's output folder
-COPY --from=builder /usr/src/app/target/x86_64-unknown-linux-musl/release/ /
+COPY --from=builder /tmp/binaries/ /
