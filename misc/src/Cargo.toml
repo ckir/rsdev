@@ -1,0 +1,49 @@
+[package]
+name = "misc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Disable default features to remove C decoders (vorbis, flac, etc.)
+# Enable 'symphonia-all' for pure-Rust decoding of almost any format
+# 'playback' is the feature that enables the 'cpal' dependency internally
+rodio = { version = "0.21.1", default-features = false, features = ["playback", "symphonia-all"] }
+chrono = "0.4"       # Time formatting and duration
+tokio = { version = "1", features = ["full"] } # Async runtime for the loop
+tokio-postgres = { version = "0.7.15", features = ["with-chrono-0_4"] }
+#actually_beep = "0.1"
+clap = { version = "4.5", features = ["derive"] }
+redis = { version = "1.0.2", features = ["tokio-comp", "tokio-native-tls-comp"] }
+native-tls = "0.2"
+postgres-native-tls = "0.5"
+tokio-postgres-rustls = "0.12"
+rustls = { version = "0.23", features = ["ring", "logging", "std", "tls12"] }
+rustls-pemfile = "2"
+rustls-native-certs = "0.8"
+webpki-roots = "0.26"
+reqwest = { version = "0.13.1", default-features = false, features = ["json", "native-tls"] }
+fern = "0.7.1"
+log = "0.4"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+url = "2.5"
+
+# My own crates
+lib_common = { path = "../../lib_common" }
+
+[[bin]]
+name = "audio_test"
+path = "audio_test.rs"
+
+[[bin]]
+name = "monitor_net"
+path = "monitor_net.rs"
+
+[[bin]]
+name = "monitor_postgres"
+path = "monitor_postgres.rs"
+
+[[bin]]
+name = "monitor_redis"
+path = "monitor_redis.rs"

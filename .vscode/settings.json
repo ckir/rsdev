@@ -1,0 +1,10 @@
+{
+    "terminal.integrated.defaultProfile.windows": "VS Dev Shell",
+    "lldb.launch.terminal": "integrated",
+    "rust-analyzer.files.exclude": [
+        "vendor"
+    ],
+    "files.watcherExclude": {
+        "**/vendor/**": true
+    },
+}

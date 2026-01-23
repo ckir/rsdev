@@ -1,0 +1,38 @@
+[package]
+name = "rs_cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# For rs_encrypt
+aes = "0.8.4"
+cbc = { version = "0.1.2", features = ["alloc"] }
+block-padding = "0.3.3" # For PKCS7 padding
+rand = "0.9.1"
+base64 = "0.22.1"
+hex = "0.4.3"
+# For rs_json5_to_json
+serde_json5 = "0.2.1"
+serde_json = "1.0.140"
+clap = { version = "4.5.40", features = ["derive"] }
+# For zip
+anyhow = "1.0.95"
+walkdir = "2.5.0"
+zip = "7.0.0"
+glob = "0.3.1"
+
+[[bin]]
+name = "rs_json-paths"
+path = "rs_json-paths.rs"
+
+[[bin]]
+name = "rs_encrypt"
+path = "rs_encrypt.rs"
+
+[[bin]]
+name = "rs_json5-to-json"
+path = "rs_json5-to-json.rs"
+
+[[bin]]
+name = "zip"
+path = "zip.rs"

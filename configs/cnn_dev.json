@@ -1,0 +1,7 @@
+{
+    "rethinkdb": {
+        "database": "CNN",
+        "table_history": "historical",
+        "table_today": "fng_todayintraday"
+    }
+}

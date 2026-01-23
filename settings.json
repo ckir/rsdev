@@ -1,0 +1,14 @@
+{
+    "terminal.integrated.profiles.windows": {
+        "VS Dev Shell": {
+            "source": "PowerShell",
+            "args": [
+                "-NoExit",
+                "-Command",
+                "& 'C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\Tools\\Launch-VsDevShell.ps1' -Arch amd64"
+            ],
+            "icon": "tools"
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "VS Dev Shell"
+}

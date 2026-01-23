@@ -1,0 +1,12 @@
+# Each line is a file pattern followed by one or more owners.
+# Syntax: <pattern> <owner> <owner>
+# Owners can be GitHub usernames or teams (format: @org/team)
+# Example: require code owners for everything under /src and for CI files
+
+# Require review by @ckir for everything by default
+* @ckir
+
+# Require reviews from the infra team for workflows and deployment scripts
+.github/workflows/ @ckir
+.github/workflows/* @ckir
+scripts/deploy/* @ckir

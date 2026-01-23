@@ -1,0 +1,180 @@
+name: Build and Export
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-static:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Build and Export Binaries
+        # The --output flag tells Docker to write the contents of the final stage (exporter)
+        # to the specified directory on the host (./dist), rather than creating a container image.
+        run: docker build --output type=local,dest=./dist .
+
+      - name: Clean up Artifacts
+        run: rm -rf ./dist/build ./dist/deps ./dist/*.d ./dist/*.rlib
+
+      - name: Suffix Binaries
+        run: |
+          for f in ./dist/*; do
+            [ -f "$f" ] && mv "$f" "$f-linux-musl"
+          done
+
+      - name: Upload to S3
+        uses: jakejarvis/s3-sync-action@0.5.0
+        with:
+          args: --acl public-read --follow-symlinks
+          bucket: ${{ secrets.S3_BUCKET }}
+          region: ${{ secrets.AWS_REGION }}
+          source_dir: ./dist
+          path: ./dist/
+
+  build-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: debian-12-x64
+            container: debian:12
+            artifact_suffix: debian-12-x64
+            # Added nodejs for local act compatibility
+            setup: apt-get update && apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs
+            bin_dir: target/release
+          - name: debian-12-i386
+            container: debian:12
+            artifact_suffix: debian-12-i386
+            # Added nodejs for local act compatibility
+            setup: dpkg --add-architecture i386 && apt-get update && apt-get install -y git curl build-essential gcc-multilib pkg-config libssl-dev:i386 libasound2-dev:i386 nodejs
+            rustup_opts: --target i686-unknown-linux-gnu
+            cargo_opts: --target i686-unknown-linux-gnu
+            pkg_config_path: /usr/lib/i386-linux-gnu/pkgconfig
+            bin_dir: target/i686-unknown-linux-gnu/release
+          - name: oracle-linux-8.10
+            container: oraclelinux:8.10
+            artifact_suffix: oracle-linux-8.10
+            # Added nodejs for local act compatibility
+            setup: dnf install -y git gcc tar gzip findutils curl openssl-devel pkg-config alsa-lib-devel nodejs
+            bin_dir: target/release
+
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Install Dependencies
+        run: ${{ matrix.setup }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal ${{ matrix.rustup_opts }}
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Build
+        env:
+          PKG_CONFIG_PATH: ${{ matrix.pkg_config_path }}
+          PKG_CONFIG_ALLOW_CROSS: 1
+        run: cargo build --release ${{ matrix.cargo_opts }}
+
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p dist
+          find ${{ matrix.bin_dir }} -maxdepth 1 -type f -executable -not -name "*.so" -not -name "*.d" | while read f; do cp "$f" "dist/$(basename "$f")-${{ matrix.artifact_suffix }}"; done
+
+      - name: Upload Artifacts to S3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks
+          bucket: ${{ secrets.S3_BUCKET }}
+          region: ${{ secrets.AWS_REGION }}
+          source_dir: ./dist
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.artifact_suffix }}
+          path: dist/
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Prepare Artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          for f in target/release/*.exe; do cp "$f" "dist/$(basename "$f" .exe)-windows-x64.exe"; done
+
+      - name: Upload Artifacts to S3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks
+          bucket: ${{ secrets.S3_BUCKET }}
+          region: ${{ secrets.AWS_REGION }}
+          source_dir: ./dist
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-windows-x64
+          path: dist/
+
+  release:
+    needs: [build-static, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+
+      - name: Upload to S3
+        uses: jakejarvis/s3-sync-action@0.5.0
+        with:
+          args: --acl public-read --follow-symlinks
+          bucket: your-s3-bucket-name
+          region: your-region
+          source_dir: ./path/to/artifacts
+
+retention:
+  days: 2
+

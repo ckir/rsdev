@@ -1,0 +1,9 @@
+apps:
+  - name: server_dummy-linux-musl
+    script: server_dummy-linux-musl
+    args:
+      - 443
+    instances: 1
+#    port: "3000-3001"
+    env:
+#      NODE_ENV: production
