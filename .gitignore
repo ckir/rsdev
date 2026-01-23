@@ -21,3 +21,6 @@ Cargo.lock
 .secrets
 .env
 .env.*
+
+# Explicitly unignore the artifacts directory itself
+!/artifacts/
