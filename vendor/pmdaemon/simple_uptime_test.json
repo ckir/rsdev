@@ -1,7 +1,0 @@
-{
-  "name": "uptime-test",
-  "script": "/home/stonedoubt/workspace/a-published-projects/pmdaemon/test_script.sh",
-  "args": [],
-  "cwd": "/home/stonedoubt/workspace/a-published-projects/pmdaemon",
-  "autorestart": false
-}

@@ -1,9 +1,0 @@
-{
-  "apps": [
-    {
-      "name": "test-app",
-      "script": "echo",
-      "args": ["Hello from config file!"]
-    }
-  ]
-}
