@@ -1,0 +1,3 @@
+[submodule "vendor/pmdaemon"]
+	path = vendor/pmdaemon
+	url = https://github.com/entrepeneur4lyf/pmdaemon.git
