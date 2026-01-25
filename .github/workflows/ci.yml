@@ -47,12 +47,17 @@ jobs:
           SOURCE_DIR: './dist'
 
       - name: Upload Artifacts
+        id: upload-artifact
         uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
           name: binaries-linux-musl
           path: ./dist/
           retention-days: 2
+
+      - name: Warn on Artifact Upload Failure
+        if: steps.upload-artifact.outcome == 'failure'
+        run: echo "::warning::Artifact upload failed. Check the logs for details. This is expected during local 'act' runs without --artifact-server-path."
 
   build-linux:
     strategy:
@@ -122,12 +127,17 @@ jobs:
           SOURCE_DIR: './dist'
 
       - name: Upload Artifacts
+        id: upload-artifact
         uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
           name: binaries-${{ matrix.artifact_suffix }}
           path: dist/
           retention-days: 2
+
+      - name: Warn on Artifact Upload Failure
+        if: steps.upload-artifact.outcome == 'failure'
+        run: echo "::warning::Artifact upload failed. Check the logs for details. This is expected during local 'act' runs without --artifact-server-path."
 
   build-windows:
     runs-on: windows-latest
@@ -161,12 +171,18 @@ jobs:
           aws s3 sync ./dist s3://${{ secrets.AWS_S3_BUCKET }}/dist --acl public-read --follow-symlinks
 
       - name: Upload Artifacts
+        id: upload-artifact
         uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
           name: binaries-windows-x64
           path: dist/
           retention-days: 2
+
+      - name: Warn on Artifact Upload Failure
+        if: steps.upload-artifact.outcome == 'failure'
+        shell: bash
+        run: echo "::warning::Artifact upload failed. Check the logs for details. This is expected during local 'act' runs without --artifact-server-path."
 
   release:
     needs: [build-static, build-linux, build-windows]
