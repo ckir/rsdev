@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "rs_json-paths",
+    name = "js-paths",
     version,
     about = "Output all paths in a JSON/JSON5 file"
 )]
