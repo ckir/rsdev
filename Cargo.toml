@@ -1,10 +1,9 @@
 [workspace]
 resolver = "2"
-members = [ "lib_common", "cli/*", "misc/*", "nasdaq/*", "servers/*", "vendor/pmdaemon" ]
+members = [ "lib_common", "cli/*", "misc/*", "nasdaq/*", "servers/*", "vendor/json5format", "vendor/pmdaemon" ]
 
 [profile.release]
 strip = true      # Strip symbols from the binary to reduce size
 lto = true        # Enable Link Time Optimization for better runtime performance
 codegen-units = 1 # Compile as a single unit for better optimization
 panic = "abort" # Optional: helps reduce size
-

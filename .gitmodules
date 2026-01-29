@@ -1,3 +1,6 @@
 [submodule "vendor/pmdaemon"]
 	path = vendor/pmdaemon
 	url = https://github.com/entrepeneur4lyf/pmdaemon.git
+[submodule "vendor/json5format"]
+	path = vendor/json5format
+	url = https://github.com/google/json5format.git
