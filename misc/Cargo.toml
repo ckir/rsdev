@@ -30,7 +30,7 @@ serde_json = "1.0"
 url = "2.5"
 
 # My own crates
-lib_common = { path = "../../lib_common" }
+lib_common = { workspace = true }
 
 [[bin]]
 name = "audio_test"

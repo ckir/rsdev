@@ -48,7 +48,7 @@ redis = { version = "1.0.1", features = ["tokio-comp"] }
 chrono-tz = "0.10.3"
 
 # My own crates
-lib_common = { path = "../../lib_common" }
+lib_common = { workspace = true }
 chrono = "0.4.40"
 
 [[bin]]

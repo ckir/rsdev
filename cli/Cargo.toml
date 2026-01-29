@@ -28,20 +28,20 @@ serde_yml = "0.0.12"
 
 [[bin]]
 name = "j5_to_yaml"
-path = "j5_to_yaml.rs"
+path = "src/j5_to_yaml.rs"
 
 [[bin]]
 name = "js-paths"
-path = "js-paths.rs"
+path = "src/js-paths.rs"
 
 [[bin]]
 name = "rs_encrypt"
-path = "rs_encrypt.rs"
+path = "src/rs_encrypt.rs"
 
 [[bin]]
 name = "rs_json5-to-json"
-path = "rs_json5-to-json.rs"
+path = "src/rs_json5-to-json.rs"
 
 [[bin]]
 name = "zip"
-path = "zip.rs"
+path = "src/zip.rs"
