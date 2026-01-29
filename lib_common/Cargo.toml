@@ -4,49 +4,48 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-
 # cross-platform library to provide easy to use beep functions
-actually_beep = "0.1.0"
+actually_beep = { workspace = true }
 
 # Date and time library for Rust
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { workspace = true }
 # TimeZone implementations for chrono from the IANA database
-chrono-tz = "0.10.1"
+chrono-tz = { workspace = true }
 
 # A lightweight crate that provides a convenient derive macro
 # for the standard library's std::error::Error trait
-thiserror = "2.0.12"
+thiserror = { workspace = true }
 
 # Cross-platform system's host name functions
-hostname = "0.4.0"
+hostname = { workspace = true }
 
 # Retrieve system's local IP address and Network Interfaces/Adapters on Linux, macOS and Windows
-local-ip-address = "0.6.3"
+local-ip-address = { workspace = true }
 
 # Provides support for configuration
-more-config = { version = "2.1.5", features = ["all", "async"] }
+more-config = { workspace = true }
 
 # A generic serialization/deserialization framework
-serde = { version = "1.0.218", features = ["derive"] }
+serde = { workspace = true }
 # A JSON serialization file format
-serde_json = "1.0.139"
+serde_json = { workspace = true }
 
 # Safe mutable static and non const static initialization,
 # and code execution at program startup/exit.
-static_init = "1.0.3"
+static_init = { workspace = true }
 
 # An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications
-tokio = { version = "1.48.0", features = ["full"] }
+tokio = { workspace = true }
 # A native, asynchronous PostgreSQL client
-tokio-postgres = {version = "0.7", features = ["with-serde_json-1", "with-chrono-0_4"]}
+tokio-postgres = { workspace = true }
 # Conversions between Rust and Postgres values
-postgres-types = { version = "0.2.9", features = ["derive"] }
-serde_derive = "1.0.228"
+postgres-types = { workspace = true }
+serde_derive = { workspace = true }
 
-aes = "0.8"
-cbc = "0.1"
-cipher = "0.4"
-reqwest = { version = "0.13.1", features = ["blocking"] }
-sha2 = "0.10"
-base64 = "0.22.1"
-hex = "0.4.3"
+aes = { workspace = true }
+cbc = { workspace = true }
+cipher = { workspace = true }
+reqwest = { workspace = true }
+sha2 = { workspace = true }
+base64 = { workspace = true }
+hex = { workspace = true }

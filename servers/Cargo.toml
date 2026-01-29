@@ -5,94 +5,91 @@ edition = "2024"
 
 [dependencies]
 # Flexible concrete Error type built on std::error::Error
-anyhow = "1.0.97"
+anyhow = { workspace = true }
 
 # Date and time library for Rust
-chrono = { version = "0.4", default-features = false }
+chrono = { workspace = true }
 # TimeZone implementations for chrono from the IANA database
-chrono-tz = { version = "0.10.3", default-features = false }
+chrono-tz = { workspace = true }
 
 # A well-maintained fork of the dotenv crate
-dotenvy = "0.15.7"
+dotenvy = { workspace = true }
 
 # A generic serialization/deserialization framework
-serde = { version = "1.0.218", features = ["derive"] }
+serde = { workspace = true }
 # A JSON serialization file format
-serde_json = "1.0.139"
+serde_json = { workspace = true }
 
 # Safe mutable static and non const static initialization,
 # and code execution at program startup/exit.
-static_init = "1.0.3"
+static_init = { workspace = true }
 
 # An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications
-tokio = { version = "1.48.0", features = ["full"] }
+tokio = { workspace = true }
 
 # util for graceful shutdown of tokio applications
-tokio-graceful = "0.2.2"
+tokio-graceful = { workspace = true }
 
 # Tasks can optionally be persisted using PostgreSQL or Nats.
-tokio-cron-scheduler = "0.15.1"
+tokio-cron-scheduler = { workspace = true }
 
-# tokio-websockets = { version = "0.11.4", features = ["client", "server", "openssl"] } 
-# tokio-tungstenite = "0.26.2"
-# tungstenite = "0.26.2"
 # A native, asynchronous PostgreSQL client
-tokio-postgres = "0.7.13"
+tokio-postgres = { workspace = true }
 
 # Redis driver for Rust
-redis = { version = "1.0.1", features = ["tokio-comp", "connection-manager"] } 
+redis = { workspace = true }
 
 # Application-level tracing for Rust
-tracing = "0.1.41"
+tracing = { workspace = true }
 
 # tracing-appender base on localtime (chrono)
-tracing-appender = "0.2.3"
+tracing-appender = { workspace = true }
 # Utilities for implementing and composing `tracing` subscribers
-tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
+tracing-subscriber = { workspace = true }
 # Lightweight logging facade for Rust
-log = "0.4.27"
+log = { workspace = true }
 # A logging implementation for `log` which is configured via an environment variable
-env_logger = "0.11.8"
+env_logger = { workspace = true }
 
 # Actix Web is a powerful, pragmatic, and extremely fast web framework for Rust
-actix-web = { version = "4", features = ["rustls-0_23"] }
+actix-web = { workspace = true }
 # Modern, safer, and faster TLS library
-rustls = { version = "0.23", features = ["ring"] }
+rustls = { workspace = true }
 # Basic .pem file parser for keys and certificates
-rustls-pemfile = "2"
+rustls-pemfile = { workspace = true }
 # Shared types for the rustls ecosystem
-rustls-pki-types = "1"
+rustls-pki-types = { workspace = true }
 # A tiny library for finding standard locations of configuration and data files
-dirs = "6.0.0"
+dirs = { workspace = true }
 
 # My own crates
 lib_common = { workspace = true }
 # Common utilities and extension traits for the futures-rs library
-futures-util = "0.3.31"
+futures-util = { workspace = true }
 # Ergonomic and modular web framework built with Tokio, Tower, and Hyper
-axum = "0.8.4"
+axum = { workspace = true }
 # A simple to use, efficient, and full-featured Command Line Argument Parser
-clap = { version = "4.5.29", features = ["derive", "env"] }
+clap = { workspace = true }
 # A dead simple async pool for tokio-postgres
-deadpool-postgres = "0.14.1"
+deadpool-postgres = { workspace = true }
 
 
 [[bin]]
 name = "server_speak"
-path = "server_speak.rs"
+path = "src/server_speak.rs"
 
 [[bin]]
 name = "server_log"
-path = "server_log.rs"
+path = "src/server_log.rs"
 
 # [[bin]]
 # name = "redis2ws"
-# path = "redis2ws.rs"
+# path = "src/redis2ws.rs"
 
 [[bin]]
 name = "server_sql"
-path = "server_sql.rs"
+path = "src/server_sql.rs"
 
 [[bin]]
 name = "server_dummy"
-path = "server_dummy.rs"
+path = "src/server_dummy.rs"
