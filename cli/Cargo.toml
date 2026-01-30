@@ -40,6 +40,8 @@ serde = { workspace = true, features = ["derive"] }
 structopt = { workspace = true }
 # A fast library for reading .gitignore files.
 ignore = { workspace = true }
+# A crate for recursively walking directory trees.
+walkdir = { workspace = true }
 # A library for reading and writing ZIP archives.
 zip = { workspace = true }
 
