@@ -8,6 +8,18 @@ This repository contains various Rust utilities and monitoring tools designed fo
 ### `misc` Crate
 Located in `misc/`, this crate contains standalone binaries for monitoring services.
 
+### `cli` Crate
+Located in `cli/`, this crate contains various command-line utilities.
+
+#### 1. `dir-to-yaml`
+Exports a directory structure to YAML.
+- **Purpose:** Provides a simple way to visualize directory structures.
+- **Key Features:**
+  - Exports to YAML.
+  - Supports excluding files (`--no-files`).
+  - Supports ignoring files from `.gitignore` (`--use-gitignore`).
+
+
 #### 1. `monitor_postgres`
 Monitors PostgreSQL instances defined in a central cloud configuration.
 - **Purpose:** Ensures database availability and sends alerts upon failure.
