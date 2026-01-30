@@ -43,9 +43,10 @@ struct PostgresConfig {
     db_url: Option<String>,
     #[serde(rename = "ssl")]
     ssl: Option<SslConfig>,
-    tags: Vec<String>,
     #[serde(rename = "dbConnection")]
     db_connection: Option<PostgresConnectionObject>,
+    #[serde(default)]
+    monitor: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -494,23 +495,23 @@ async fn main() -> Result<()> {
     // 2. Parse Configuration
     let mut postgres_instances = Vec::new();
 
-    // Navigate to config.commonAll.db.postgres
-    if let Some(postgres_config) = config_json.pointer("/commonAll/db/postgres") {
-        match serde_json::from_value::<Vec<PostgresConfig>>(postgres_config.clone()) {
+    // Navigate to config.commonAll.db.postgres.cloud
+    if let Some(postgres_cloud_config) = config_json.pointer("/commonAll/db/postgres/cloud") {
+        match serde_json::from_value::<Vec<PostgresConfig>>(postgres_cloud_config.clone()) {
             Ok(entries) => {
                 postgres_instances = entries
                     .into_iter()
-                    .filter(|e| e.active && !e.tags.iter().any(|t| t == "local"))
+                    .filter(|e| e.active && e.monitor)
                     .collect();
                 info!(
-                    "Found {} PostgreSQL instances to monitor.",
+                    "Found {} PostgreSQL cloud instances to monitor.",
                     postgres_instances.len()
                 );
             }
-            Err(e) => warn!("Failed to parse postgres config: {}", e),
+            Err(e) => warn!("Failed to parse postgres cloud config: {}", e),
         }
     } else {
-        warn!("Configuration path /commonAll/db/postgres not found");
+        warn!("Configuration path /commonAll/db/postgres/cloud not found");
     }
 
     // Parse Alerts Configuration

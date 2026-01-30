@@ -4,33 +4,42 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# For rs_encrypt
+# A crate for implementing AES block ciphers.
 aes = { workspace = true }
-cbc = { workspace = true }
-block-padding = { workspace = true }
-rand = { workspace = true }
-base64 = { workspace = true }
-hex = { workspace = true }
-
-# For j5-to-json
-serde_json5 = { workspace = true }
-serde_json = { workspace = true }
-clap = { workspace = true }
-
-# For zip
+# Flexible concrete Error type built on std::error::Error.
 anyhow = { workspace = true }
-walkdir = { workspace = true }
-zip = { workspace = true }
+# A library for encoding and decoding data in Base64.
+base64 = { workspace = true }
+# A crate that provides traits and functions for block padding.
+block-padding = { workspace = true }
+# A crate for implementing Cipher Block Chaining (CBC) mode for block ciphers.
+cbc = { workspace = true }
+# A simple-to-use, efficient, and full-featured command-line argument parser.
+clap = { workspace = true }
+# A crate for finding files that match a glob pattern.
 glob = { workspace = true }
-
-# For j5-to-yaml
-regex = { workspace = true }
+# A library for encoding and decoding data in hexadecimal format.
+hex = { workspace = true }
+# A parser for the JSON5 data format.
 json5 = { workspace = true }
-serde_yml = { workspace = true }
-
-# For j5-format
+# A library for formatting JSON5 data.
 json5format = { workspace = true }
+# A crate for generating random numbers.
+rand = { workspace = true }
+# A regular expression library for Rust.
+regex = { workspace = true }
+# A JSON serialization file format.
+serde_json = { workspace = true }
+# A JSON5 serialization file format.
+serde_json5 = { workspace = true }
+# A YAML serialization file format.
+serde_yml = { workspace = true }
+# A library for parsing command-line arguments.
 structopt = { workspace = true }
+# A crate for recursively walking directory trees.
+walkdir = { workspace = true }
+# A library for reading and writing ZIP archives.
+zip = { workspace = true }
 
 [[bin]]
 name = "j5-format"

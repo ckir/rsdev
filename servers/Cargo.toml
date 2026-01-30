@@ -4,74 +4,60 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# Flexible concrete Error type built on std::error::Error
-anyhow = { workspace = true }
-
-# Date and time library for Rust
-chrono = { workspace = true }
-# TimeZone implementations for chrono from the IANA database
-chrono-tz = { workspace = true }
-
-# A well-maintained fork of the dotenv crate
-dotenvy = { workspace = true }
-
-# A generic serialization/deserialization framework
-serde = { workspace = true }
-# A JSON serialization file format
-serde_json = { workspace = true }
-
-# Safe mutable static and non const static initialization,
-# and code execution at program startup/exit.
-static_init = { workspace = true }
-
-# An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications
-tokio = { workspace = true }
-
-# util for graceful shutdown of tokio applications
-tokio-graceful = { workspace = true }
-
-# Tasks can optionally be persisted using PostgreSQL or Nats.
-tokio-cron-scheduler = { workspace = true }
-
-# A native, asynchronous PostgreSQL client
-tokio-postgres = { workspace = true }
-
-# Redis driver for Rust
-redis = { workspace = true }
-
-# Application-level tracing for Rust
-tracing = { workspace = true }
-
-# tracing-appender base on localtime (chrono)
-tracing-appender = { workspace = true }
-# Utilities for implementing and composing `tracing` subscribers
-tracing-subscriber = { workspace = true }
-# Lightweight logging facade for Rust
-log = { workspace = true }
-# A logging implementation for `log` which is configured via an environment variable
-env_logger = { workspace = true }
-
-# Actix Web is a powerful, pragmatic, and extremely fast web framework for Rust
+# A powerful, pragmatic, and extremely fast web framework for Rust.
 actix-web = { workspace = true }
-# Modern, safer, and faster TLS library
-rustls = { workspace = true }
-# Basic .pem file parser for keys and certificates
-rustls-pemfile = { workspace = true }
-# Shared types for the rustls ecosystem
-rustls-pki-types = { workspace = true }
-# A tiny library for finding standard locations of configuration and data files
-dirs = { workspace = true }
-
-# My own crates
-lib_common = { workspace = true }
-# Common utilities and extension traits for the futures-rs library
-futures-util = { workspace = true }
-# Ergonomic and modular web framework built with Tokio, Tower, and Hyper
+# Flexible concrete Error type built on std::error::Error.
+anyhow = { workspace = true }
+# An ergonomic and modular web framework built with Tokio, Tower, and Hyper.
 axum = { workspace = true }
-# A simple to use, efficient, and full-featured Command Line Argument Parser
+# A library for working with dates and times.
+chrono = { workspace = true }
+# TimeZone implementations for chrono from the IANA database.
+chrono-tz = { workspace = true }
+# A simple-to-use, efficient, and full-featured command-line argument parser.
 clap = { workspace = true }
-# A dead simple async pool for tokio-postgres
+# A dead-simple async pool for tokio-postgres.
 deadpool-postgres = { workspace = true }
+# A tiny library for finding standard locations of configuration and data files.
+dirs = { workspace = true }
+# A well-maintained fork of the dotenv crate to load environment variables from a .env file.
+dotenvy = { workspace = true }
+# A logging implementation for `log` which is configured via an environment variable.
+env_logger = { workspace = true }
+# Common utilities and extension traits for the futures-rs library.
+futures-util = { workspace = true }
+# A shared library for this project.
+lib_common = { workspace = true }
+# A lightweight logging facade for Rust.
+log = { workspace = true }
+# A Redis driver for Rust.
+redis = { workspace = true }
+# A modern, safer, and faster TLS library.
+rustls = { workspace = true }
+# A basic .pem file parser for keys and certificates.
+rustls-pemfile = { workspace = true }
+# Shared types for the rustls ecosystem.
+rustls-pki-types = { workspace = true }
+# A generic serialization/deserialization framework.
+serde = { workspace = true }
+# A JSON serialization file format.
+serde_json = { workspace = true }
+# Safe mutable static and non-const static initialization, and code execution at program startup/exit.
+static_init = { workspace = true }
+# An event-driven, non-blocking I/O platform for writing asynchronous I/O-backed applications.
+tokio = { workspace = true }
+# A library for scheduling tasks with cron-like expressions.
+tokio-cron-scheduler = { workspace = true }
+# A utility for graceful shutdown of tokio applications.
+tokio-graceful = { workspace = true }
+# A native, asynchronous PostgreSQL client.
+tokio-postgres = { workspace = true }
+# Application-level tracing for Rust.
+tracing = { workspace = true }
+# A tracing-appender based on localtime (chrono).
+tracing-appender = { workspace = true }
+# Utilities for implementing and composing `tracing` subscribers.
+tracing-subscriber = { workspace = true }
 
 
 [[bin]]

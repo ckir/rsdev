@@ -4,52 +4,40 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# Flexible concrete Error type built on std::error::Error
+# Flexible concrete Error type built on std::error::Error.
 anyhow = { workspace = true }
-
+# A library for working with dates and times.
+chrono = { workspace = true }
+# TimeZone implementations for chrono from the IANA database.
+chrono-tz = { workspace = true }
+# A well-maintained fork of the dotenv crate to load environment variables from a .env file.
+dotenvy = { workspace = true }
+# A shared library for this project.
+lib_common = { workspace = true }
+# A Redis driver for Rust.
+redis = { workspace = true }
+# An HTTP client library for Rust.
+reqwest = { workspace = true }
+# A generic serialization/deserialization framework.
+serde = { workspace = true }
+# Macros 1.1 implementation of #[derive(Serialize, Deserialize)].
+serde_derive = { workspace = true }
+# A JSON serialization file format.
+serde_json = { workspace = true }
+# Safe mutable static and non-const static initialization, and code execution at program startup/exit.
+static_init = { workspace = true }
 # This library provides a convenient derive macro for the standard library’s std::error::Error trait.
 thiserror = { workspace = true }
-
-# A well-maintained fork of the dotenv crate
-dotenvy = { workspace = true }
-
-# A generic serialization/deserialization framework
-serde = { workspace = true }
-# Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
-serde_derive = { workspace = true }
-# A JSON serialization file format
-serde_json = { workspace = true }
-
-# Safe mutable static and non const static initialization,
-# and code execution at program startup/exit.
-static_init = { workspace = true }
-
-# An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications
+# An event-driven, non-blocking I/O platform for writing asynchronous I/O-backed applications.
 tokio = { workspace = true }
-# util for graceful shutdown of tokio applications
-# tokio-graceful = "0.2.2"
-# Tasks can optionally be persisted using PostgreSQL or Nats.
+# A library for scheduling tasks with cron-like expressions.
 tokio-cron-scheduler = { workspace = true }
-
-# Application-level tracing for Rust
+# Application-level tracing for Rust.
 tracing = { workspace = true }
-# tracing-appender base on localtime (chrono)
+# A tracing-appender based on localtime (chrono).
 tracing-appender = { workspace = true }
-# Utilities for implementing and composing `tracing` subscribers
+# Utilities for implementing and composing `tracing` subscribers.
 tracing-subscriber = { workspace = true }
-
-# higher level HTTP client library
-reqwest = { workspace = true }
-
-# Redis-rs is a high level Rust library for Redis
-redis = { workspace = true }
-
-#
-chrono-tz = { workspace = true }
-
-# My own crates
-lib_common = { workspace = true }
-chrono = { workspace = true }
 
 [[bin]]
 name = "apicall"
@@ -57,4 +45,4 @@ path = "src/apicall.rs"
 
 [[bin]]
 name = "marketstatus"
-path = "src/marketstatus.rs"
+path = "src/market_status.rs"

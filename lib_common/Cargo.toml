@@ -4,48 +4,45 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# cross-platform library to provide easy to use beep functions
+# A cross-platform library that provides easy-to-use beep functions.
 actually_beep = { workspace = true }
-
-# Date and time library for Rust
-chrono = { workspace = true }
-# TimeZone implementations for chrono from the IANA database
-chrono-tz = { workspace = true }
-
-# A lightweight crate that provides a convenient derive macro
-# for the standard library's std::error::Error trait
-thiserror = { workspace = true }
-
-# Cross-platform system's host name functions
-hostname = { workspace = true }
-
-# Retrieve system's local IP address and Network Interfaces/Adapters on Linux, macOS and Windows
-local-ip-address = { workspace = true }
-
-# Provides support for configuration
-more-config = { workspace = true }
-
-# A generic serialization/deserialization framework
-serde = { workspace = true }
-# A JSON serialization file format
-serde_json = { workspace = true }
-
-# Safe mutable static and non const static initialization,
-# and code execution at program startup/exit.
-static_init = { workspace = true }
-
-# An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications
-tokio = { workspace = true }
-# A native, asynchronous PostgreSQL client
-tokio-postgres = { workspace = true }
-# Conversions between Rust and Postgres values
-postgres-types = { workspace = true }
-serde_derive = { workspace = true }
-
+# A crate for implementing AES block ciphers.
 aes = { workspace = true }
-cbc = { workspace = true }
-cipher = { workspace = true }
-reqwest = { workspace = true }
-sha2 = { workspace = true }
+# A library for encoding and decoding data in Base64.
 base64 = { workspace = true }
+# A crate for implementing Cipher Block Chaining (CBC) mode for block ciphers.
+cbc = { workspace = true }
+# A library for working with dates and times.
+chrono = { workspace = true }
+# TimeZone implementations for chrono from the IANA database.
+chrono-tz = { workspace = true }
+# A crate that provides traits for cryptographic ciphers.
+cipher = { workspace = true }
+# A library for encoding and decoding data in hexadecimal format.
 hex = { workspace = true }
+# A library for getting the hostname of the current system.
+hostname = { workspace = true }
+# A library for getting the local IP address of the current system.
+local-ip-address = { workspace = true }
+# A crate that provides support for configuration.
+more-config = { workspace = true }
+# Conversions between Rust and Postgres values.
+postgres-types = { workspace = true }
+# An HTTP client library for Rust.
+reqwest = { workspace = true }
+# A generic serialization/deserialization framework.
+serde = { workspace = true }
+# Macros 1.1 implementation of #[derive(Serialize, Deserialize)].
+serde_derive = { workspace = true }
+# A JSON serialization file format.
+serde_json = { workspace = true }
+# A crate that provides the SHA-2 family of hash functions.
+sha2 = { workspace = true }
+# Safe mutable static and non-const static initialization, and code execution at program startup/exit.
+static_init = { workspace = true }
+# This library provides a convenient derive macro for the standard library’s std::error::Error trait.
+thiserror = { workspace = true }
+# An event-driven, non-blocking I/O platform for writing asynchronous I/O-backed applications.
+tokio = { workspace = true }
+# A native, asynchronous PostgreSQL client.
+tokio-postgres = { workspace = true }

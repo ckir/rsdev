@@ -21,6 +21,8 @@ struct RedisEntry {
     db_name: String,
     #[serde(rename = "dbUrl")]
     db_url: String,
+    #[serde(default)]
+    monitor: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -41,6 +43,7 @@ struct MonitorConfig {
 }
 
 fn setup_logging() -> Result<()> {
+    let log_filename = format!("monitor_redis_{}.log", chrono::Local::now().format("%Y-%m-%d"));
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
@@ -53,7 +56,7 @@ fn setup_logging() -> Result<()> {
         })
         .level(log::LevelFilter::Info)
         .chain(std::io::stderr())
-        .chain(fern::log_file("monitor_redis.log")?)
+        .chain(fern::log_file(&log_filename)?)
         .apply()?;
     Ok(())
 }
@@ -195,12 +198,14 @@ async fn main() -> Result<()> {
         match serde_json::from_value::<Vec<RedisEntry>>(cloud_config.clone()) {
             Ok(entries) => {
                 for entry in entries {
-                    info!(
-                        "Found Redis instance: {} ({})",
-                        entry.db_name,
-                        mask_url_password(&entry.db_url)
-                    );
-                    redis_instances.push(entry.db_url);
+                    if entry.monitor {
+                        info!(
+                            "Found Redis instance to monitor: {} ({})",
+                            entry.db_name,
+                            mask_url_password(&entry.db_url)
+                        );
+                        redis_instances.push(entry.db_url);
+                    }
                 }
             }
             Err(e) => warn!("Failed to parse redis cloud config: {}", e),

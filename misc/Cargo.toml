@@ -4,32 +4,48 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# Disable default features to remove C decoders (vorbis, flac, etc.)
-# Enable 'symphonia-all' for pure-Rust decoding of almost any format
-# 'playback' is the feature that enables the 'cpal' dependency internally
-rodio = { workspace = true }
-chrono = { workspace = true }       # Time formatting and duration
-tokio = { workspace = true } # Async runtime for the loop
-tokio-postgres = { workspace = true }
-clap = { workspace = true }
-redis = { workspace = true }
-native-tls = { workspace = true }
-postgres-native-tls = { workspace = true }
-tokio-postgres-rustls = { workspace = true }
-rustls = { workspace = true }
-rustls-pemfile = { workspace = true }
-rustls-native-certs = { workspace = true }
-webpki-roots = { workspace = true }
-reqwest = { workspace = true }
-fern = { workspace = true }
-log = { workspace = true }
+# Flexible concrete Error type built on std::error::Error.
 anyhow = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-url = { workspace = true }
-
-# My own crates
+# A library for working with dates and times.
+chrono = { workspace = true }
+# A simple-to-use, efficient, and full-featured command-line argument parser.
+clap = { workspace = true }
+# A configurable logger for Rust.
+fern = { workspace = true }
+# A shared library for this project.
 lib_common = { workspace = true }
+# A lightweight logging facade for Rust.
+log = { workspace = true }
+# A crate that provides an abstraction over native TLS implementations.
+native-tls = { workspace = true }
+# A native-tls implementation for rust-postgres.
+postgres-native-tls = { workspace = true }
+# A Redis driver for Rust.
+redis = { workspace = true }
+# An HTTP client library for Rust.
+reqwest = { workspace = true }
+# An audio playback library.
+rodio = { workspace = true }
+# A modern, safer, and faster TLS library.
+rustls = { workspace = true }
+# A crate for loading TLS keys and certificates from native certificate stores.
+rustls-native-certs = { workspace = true }
+# A basic .pem file parser for keys and certificates.
+rustls-pemfile = { workspace = true }
+# A generic serialization/deserialization framework.
+serde = { workspace = true }
+# A JSON serialization file format.
+serde_json = { workspace = true }
+# An event-driven, non-blocking I/O platform for writing asynchronous I/O-backed applications.
+tokio = { workspace = true }
+# A native, asynchronous PostgreSQL client.
+tokio-postgres = { workspace = true }
+# A rustls implementation for tokio-postgres.
+tokio-postgres-rustls = { workspace = true }
+# A URL parsing library.
+url = { workspace = true }
+# A library for working with webpki roots.
+webpki-roots = { workspace = true }
 
 [[bin]]
 name = "audio_test"
