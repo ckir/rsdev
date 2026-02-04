@@ -31,7 +31,11 @@ FROM rust:1.92-slim AS builder
 
 # clang and libclang-dev are REQUIRED for alsa-sys to run bindgen
 RUN apt-get update && apt-get install -y \
-    musl-tools pkg-config clang libclang-dev && rm -rf /var/lib/apt/lists/*
+    musl-tools pkg-config clang libclang-dev curl unzip && rm -rf /var/lib/apt/lists/*
+
+RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v33.5/protoc-33.5-linux-x86_64.zip \
+    && unzip -o protoc-33.5-linux-x86_64.zip -d /usr/local \
+    && rm protoc-33.5-linux-x86_64.zip
 
 RUN rustup target add x86_64-unknown-linux-musl
 COPY --from=c-builder /usr/local/musl /usr/local/musl

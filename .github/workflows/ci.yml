@@ -19,9 +19,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Protoc
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
-
       - name: Build and Export Binaries
         run: docker build --output type=local,dest=./dist .
 
@@ -43,12 +40,14 @@ jobs:
           - name: debian-12-x64
             container: debian:12
             artifact_suffix: debian-12-x64
-            setup: apt-get update && apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs protobuf-compiler
+            setup: apt-get update && apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs unzip
+            protoc_zip: protoc-33.5-linux-x86_64.zip
             bin_dir: target/release
           - name: debian-12-i386
             container: debian:12
             artifact_suffix: debian-12-i386
-            setup: dpkg --add-architecture i386 && apt-get update && apt-get install -y git curl build-essential gcc-multilib pkg-config libssl-dev:i386 libasound2-dev:i386 nodejs protobuf-compiler
+            setup: dpkg --add-architecture i386 && apt-get update && apt-get install -y git curl build-essential gcc-multilib pkg-config libssl-dev:i386 libasound2-dev:i386 nodejs unzip
+            protoc_zip: protoc-33.5-linux-x86_32.zip
             rustup_opts: --target i686-unknown-linux-gnu
             cargo_opts: --target i686-unknown-linux-gnu
             pkg_config_path: /usr/lib/i386-linux-gnu/pkgconfig
@@ -56,7 +55,8 @@ jobs:
           - name: oracle-linux-8.10
             container: oraclelinux:8.10
             artifact_suffix: oracle-linux-8.10
-            setup: dnf install -y git gcc tar gzip findutils curl openssl-devel pkg-config alsa-lib-devel nodejs protobuf-compiler
+            setup: dnf install -y git gcc tar gzip findutils curl openssl-devel pkg-config alsa-lib-devel nodejs unzip
+            protoc_zip: protoc-33.5-linux-x86_64.zip
             bin_dir: target/release
 
     runs-on: ubuntu-latest
@@ -64,6 +64,12 @@ jobs:
     steps:
       - name: Install Dependencies
         run: ${{ matrix.setup }}
+
+      - name: Install Protoc
+        run: |
+          curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v33.5/${{ matrix.protoc_zip }}
+          unzip -o ${{ matrix.protoc_zip }} -d /usr/local
+          rm ${{ matrix.protoc_zip }}
 
       - name: Checkout code
         uses: actions/checkout@v4
