@@ -105,9 +105,10 @@ jobs:
         run: |
           Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v33.5/protoc-33.5-win64.zip -OutFile protoc.zip
           Expand-Archive -Path protoc.zip -DestinationPath protoc
-          echo "$PWD/protoc/bin" | Out-File -FilePath $GITHUB_PATH -Encoding Utf8 -Append
 
       - name: Build
+        env:
+          PROTOC: ${{ github.workspace }}/protoc/bin/protoc.exe
         run: cargo build --release
 
       - name: Prepare Artifacts
