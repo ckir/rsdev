@@ -25,5 +25,11 @@ Cargo.lock
 # Explicitly unignore the artifacts directory itself
 !/artifacts/
 
+# Python specific ignores
+*.pyc
+__pycache__/
+venv/
+.venv/
+
 config.json
 

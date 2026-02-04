@@ -8,18 +8,6 @@ This repository contains various Rust utilities and monitoring tools designed fo
 ### `misc` Crate
 Located in `misc/`, this crate contains standalone binaries for monitoring services.
 
-### `cli` Crate
-Located in `cli/`, this crate contains various command-line utilities.
-
-#### 1. `dir-to-yaml`
-Exports a directory structure to YAML.
-- **Purpose:** Provides a simple way to visualize directory structures.
-- **Key Features:**
-  - Exports to YAML.
-  - Supports excluding files (`--no-files`).
-  - Supports ignoring files from `.gitignore` (`--use-gitignore`).
-
-
 #### 1. `monitor_postgres`
 Monitors PostgreSQL instances defined in a central cloud configuration.
 - **Purpose:** Ensures database availability and sends alerts upon failure.
@@ -54,6 +42,19 @@ Monitors local internet connectivity.
   - Plays `Disconnected.wav` via `rodio` upon connection loss.
   - Logs outage duration.
 
+### `servers` Crate
+Located in `servers/`, this crate contains server applications.
+
+#### 1. `server_yahoo`
+A standalone WebSocket proxy server for Yahoo Finance streaming data.
+- **Purpose:** Multiplexes a single Yahoo Finance WebSocket connection to multiple downstream clients.
+- **Key Features:**
+  - **Single Upstream Connection:** Maintains one connection to Yahoo to avoid rate limits.
+  - **Client Isolation:** Each client manages its own subscriptions independently.
+  - **Efficient Broadcasting:** Decodes Protobuf messages once and broadcasts them to interested clients.
+  - **Graceful Shutdown:** Handles SIGINT/SIGTERM to close connections cleanly.
+  - **Logging:** Uses `fern` for file-based logging with daily rotation.
+
 ## Shared Libraries
 - **`lib_common`**: Contains shared logic, primarily for loading and parsing the cloud configuration JSON.
 
@@ -64,3 +65,5 @@ Monitors local internet connectivity.
 - **Logging:** `fern`, `log`
 - **HTTP Client:** `reqwest`
 - **Audio:** `rodio`
+- **WebSockets:** `tokio-tungstenite`, `axum`
+- **Protobuf:** `prost`

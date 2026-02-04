@@ -1,0 +1,726 @@
+rsdev:
+  artifacts:
+    files:
+    - '.gitignore'
+  cli:
+    src:
+      files:
+      - dir-to-yaml.rs
+      - j5-format.rs
+      - j5-to-json.rs
+      - j5-to-yaml.rs
+      - js-paths.rs
+      - rs_encrypt.rs
+      - zip.rs
+    files:
+    - Cargo.toml
+  common:
+    files:
+    - logrecord.rs
+    - sys_config.rs
+    - utils.rs
+  configs:
+    files:
+    - cnn_dev.json
+    - config.global.json
+    - server_log.common.json
+    - server_log.dev.json
+    - server_speak.common.json
+    - server_speak.dev.json
+    - server_speak.dev.linux.json
+    - server_speak.dev.windows.json
+    - tests.common.json
+    - tests.dev.json
+    - tests.dev.linux.json
+    - tests.dev.windows.json
+  lib_common:
+    src:
+      files:
+      - config_cloud.rs
+      - config_sys.rs
+      - lib.rs
+      - logrecord.rs
+      - sys_info.rs
+      - utils.rs
+    files:
+    - Cargo.toml
+  misc:
+    src:
+      files:
+      - audio_test.rs
+      - Disconnected.wav
+      - monitor_net.rs
+      - monitor_postgres.rs
+      - monitor_redis.rs
+    files:
+    - Cargo.toml
+  nasdaq:
+    src:
+      logs:
+        files:
+        - marketstatus.2025-04-27
+      files:
+      - apicall.rs
+      - libnasdaq.rs
+      - market_status.rs
+    files:
+    - Cargo.toml
+  scripts:
+    files:
+    - ArtifactsRepack.ps1
+    - Export-Env.ps1
+    - GitHub_Actions_Del_Artifacts.ps1
+    - GitHub_Actions_Storage_Reset.ps1
+    - Github_List_artifacts_across_all_repos.ps1
+    - merge_binaries.sh
+    - upload_rsdev.sh
+  servers:
+    src:
+      files:
+      - redis2ws.rs
+      - server_dummy.rs
+      - server_log.rs
+      - server_speak.rs
+      - server_sql.rs
+      - Test_server_speak.ps1
+    files:
+    - Cargo.toml
+  vendor:
+    json5format:
+      examples:
+        files:
+        - formatjson5.rs
+      fuzz:
+        fuzz_targets:
+          files:
+          - fuzz_parse.rs
+        files:
+        - Cargo.toml
+      samples:
+        fuzz_fails_fixed:
+          files:
+          - clusterfuzz-testcase-minimized-fuzz_parse-4641835596251136
+          - clusterfuzz-testcase-minimized-fuzz_parse-4802677486780416
+          - clusterfuzz-testcase-minimized-fuzz_parse-4993106563956736
+          - clusterfuzz-testcase-minimized-fuzz_parse-5734884822351872
+          - clusterfuzz-testcase-minimized-fuzz_parse-6069233958649856
+          - clusterfuzz-testcase-minimized-fuzz_parse-6238978431385600
+          - clusterfuzz-testcase-minimized-fuzz_parse-6541106597199872
+          - clusterfuzz-testcase-minimized-fuzz_parse-6612345919504384
+          - clusterfuzz-testcase-minimized-fuzz_parse-6642606161920000
+      src:
+        files:
+        - content.rs
+        - error.rs
+        - formatter.rs
+        - lib.rs
+        - options.rs
+        - parser.rs
+      tests:
+        files:
+        - lib.rs
+      files:
+      - Cargo.lock
+      - Cargo.toml
+      - code-of-conduct.md
+      - CONTRIBUTING.md
+      - LICENSE
+      - README.md
+      - rustfmt.toml
+    pmdaemon:
+      assets:
+        files:
+        - android-chrome-192x192.png
+        - android-chrome-512x512.png
+        - apple-touch-icon.png
+        - cli.png
+        - favicon-16x16.png
+        - favicon-32x32.png
+        - favicon.ico
+        - flow.mmd
+        - flow.png
+        - icon.png
+        - logo-small.png
+        - logo.png
+        - README.md
+      docs:
+        build:
+          assets:
+            css:
+              files:
+              - styles.86c008f8.css
+            js:
+              files:
+              - '01352b82.c0c114f5.js'
+              - '01a85c17.6eb5b64c.js'
+              - '0a7f6606.c908e78b.js'
+              - '0b1ac180.a7ee58dd.js'
+              - '0c2cabae.44237b86.js'
+              - '0e20d965.c3813075.js'
+              - '0eee017e.05c30de6.js'
+              - '100957fb.e45f2197.js'
+              - '1259.0444b5c1.js'
+              - '165.4352d992.js'
+              - '165.4352d992.js.LICENSE.txt'
+              - '17896441.9a5a2aea.js'
+              - '186.12153a33.js'
+              - '1a4e3797.394d5303.js'
+              - '1d395674.f81d809a.js'
+              - '2024.382b9fbf.js'
+              - '2030.c432a7d7.js'
+              - '2050.8e276532.js'
+              - '2130.73b89c63.js'
+              - '2187.982cbbdc.js'
+              - '2237.6eec7338.js'
+              - '2334.36e414a3.js'
+              - '2344.33e970a3.js'
+              - '24.1584b181.js'
+              - '2764.aef037d1.js'
+              - '2cb13436.50e0a9bf.js'
+              - '2d85e127.dc6065eb.js'
+              - '308c43fd.6bc5d781.js'
+              - '30eed601.114d4f59.js'
+              - '3106.3395a1d2.js'
+              - '315.692b6216.js'
+              - '3592d2f2.5a441bce.js'
+              - '35c96383.af7c7b50.js'
+              - '3624.261b8c03.js'
+              - '36994c47.8e091f31.js'
+              - '3923.372a4467.js'
+              - '39a14576.d00708fc.js'
+              - '3a643a47.79bb6b26.js'
+              - '3c472cab.010fa324.js'
+              - '3cc28959.c2bfece0.js'
+              - '3d9ddfd6.4cededa3.js'
+              - '416.42037f25.js'
+              - '4251.4990dee5.js'
+              - '434.e669ffac.js'
+              - '4342e6b2.19f04eaa.js'
+              - '4564.b3003c98.js'
+              - '463.a98df084.js'
+              - '4772665e.62dfcec6.js'
+              - '491b1ffc.4f365e26.js'
+              - '4931.be4cfd1f.js'
+              - '49fc78f5.ecf61562.js'
+              - '4fd08b4a.06f8ed39.js'
+              - '507b3379.3e339060.js'
+              - '5101f35c.a3a2389f.js'
+              - '54f44165.db11d556.js'
+              - '56131ca9.fb3fc18d.js'
+              - '5723.81354575.js'
+              - '5831.8449c22a.js'
+              - '588bd741.a677a554.js'
+              - '5dc33db6.4df42249.js'
+              - '5e95c892.beaa2fa6.js'
+              - '60c62877.9b3f14ab.js'
+              - '621db11d.0e555ef0.js'
+              - '67c783ec.6edad413.js'
+              - '6875c492.1207f38c.js'
+              - '7043fc60.fb9ebb06.js'
+              - '7160.3222255f.js'
+              - '7298.6d238e7f.js'
+              - '7303.4f96e331.js'
+              - '7518.1c3b4633.js'
+              - '7538.fe9c50df.js'
+              - '7576b58b.8615ac65.js'
+              - '758.455d5868.js'
+              - '7776d3c4.d8ce36d4.js'
+              - '7816.b6503b72.js'
+              - '79f7e0a9.42baa776.js'
+              - '7bb04240.b4de7f5f.js'
+              - '8032.cb2f5fba.js'
+              - '814f3328.5786f7ce.js'
+              - '8158.0e12364f.js'
+              - '8249ded9.a2862234.js'
+              - '8313.20f21db5.js'
+              - '86d0835c.de6961ff.js'
+              - '8731.241ea18e.js'
+              - '887a50b8.c5b1e591.js'
+              - '8913.005a6fe0.js'
+              - '8938.04175f78.js'
+              - '8c27ec2a.54a62770.js'
+              - '903fa52d.12df2ed7.js'
+              - '9054.751956b5.js'
+              - '9169.e66896ea.js'
+              - '9427.face000a.js'
+              - '9427.face000a.js.LICENSE.txt'
+              - '9443.00676e65.js'
+              - '94703b92.0371d126.js'
+              - '9495.6b67e190.js'
+              - '97483023.62ba2bfd.js'
+              - '9996.d71555ef.js'
+              - '99e021aa.93480fcb.js'
+              - '9b7235bd.84238eb7.js'
+              - '9d169c6f.547aa3d0.js'
+              - '9d91ad84.9d339190.js'
+              - '9e4087bc.d629c2bf.js'
+              - '9f6a17ee.1406faa7.js'
+              - '9ff4038f.47513cc2.js'
+              - a0905f66.ea8b0048.js
+              - a226d97b.f65acd7d.js
+              - a30b6e47.acde8089.js
+              - a54d35fe.057b3e05.js
+              - a6aa9e1f.8b9d2963.js
+              - a7456010.cc8c51f4.js
+              - a7bd4aaa.899fc994.js
+              - a94703ab.2ece66d0.js
+              - aae8a6e8.ed267023.js
+              - aba21aa0.a07019f9.js
+              - ac09c6b4.9c0de953.js
+              - acecf23e.ef844cb4.js
+              - adb710fb.3adce1c4.js
+              - ae3931f0.60cf6fe3.js
+              - ae8584e3.fcf5fd6b.js
+              - aed27535.359e4457.js
+              - aef2f35b.9c33a626.js
+              - b5e40d68.b04e78bc.js
+              - baeff1df.34ba119f.js
+              - c141421f.c20d4c06.js
+              - c4741e79.6ea4568a.js
+              - c4f5d8e4.7044aff5.js
+              - c54b27a5.25452731.js
+              - c7cd6502.55ca67c5.js
+              - ca5611f1.dde7b711.js
+              - cb0bc2b7.d6736700.js
+              - cc78e139.809b5c67.js
+              - ccc49370.8ed45dab.js
+              - cd02096f.627d20dc.js
+              - d00315a8.f50e4074.js
+              - d9335100.f83889cc.js
+              - ded9c051.e1e5c67a.js
+              - e33a96cc.d82f4296.js
+              - f0d9658e.f501fd3f.js
+              - f4b4b0d5.d2b5edc7.js
+              - f77c9094.315c91d8.js
+              - fcfd580c.c893dec9.js
+              - main.bb868f87.js
+              - main.bb868f87.js.LICENSE.txt
+              - runtime~main.8a2f3387.js
+          changelog:
+            '2025':
+              '05':
+                '29':
+                  v0.1.4:
+                    files:
+                    - index.html
+            archive:
+              files:
+              - index.html
+            authors:
+              files:
+              - index.html
+            tags:
+              accuracy:
+                files:
+                - index.html
+              bugfix:
+                files:
+                - index.html
+              config-files:
+                files:
+                - index.html
+              cross-platform:
+                files:
+                - index.html
+              delete-operations:
+                files:
+                - index.html
+              documentation:
+                files:
+                - index.html
+              ecosystem:
+                files:
+                - index.html
+              health-checks:
+                files:
+                - index.html
+              initial:
+                files:
+                - index.html
+              linux:
+                files:
+                - index.html
+              macos:
+                files:
+                - index.html
+              monitoring:
+                files:
+                - index.html
+              persistence:
+                files:
+                - index.html
+              pm-2:
+                files:
+                - index.html
+              process-manager:
+                files:
+                - index.html
+              release:
+                files:
+                - index.html
+              rust:
+                files:
+                - index.html
+              security:
+                files:
+                - index.html
+              stability:
+                files:
+                - index.html
+              testing:
+                files:
+                - index.html
+              windows:
+                files:
+                - index.html
+              files:
+              - index.html
+            v0.1.0:
+              files:
+              - index.html
+            v0.1.1:
+              files:
+              - index.html
+            v0.1.2-ecosystem-config-cross-platform:
+              files:
+              - index.html
+            v0.1.3-critical-bug-fixes-state-persistence:
+              files:
+              - index.html
+            files:
+            - atom.xml
+            - feed.json
+            - index.html
+            - rss.xml
+          docs:
+            advanced:
+              clustering:
+                files:
+                - index.html
+              logging:
+                files:
+                - index.html
+              performance-tuning:
+                files:
+                - index.html
+              security:
+                files:
+                - index.html
+              troubleshooting:
+                files:
+                - index.html
+            api:
+              api-examples:
+                files:
+                - index.html
+              authentication:
+                files:
+                - index.html
+              error-handling:
+                files:
+                - index.html
+              library-usage:
+                files:
+                - index.html
+              rest-api:
+                files:
+                - index.html
+              websocket-api:
+                files:
+                - index.html
+            architecture:
+              overview:
+                files:
+                - index.html
+            cli:
+              commands:
+                files:
+                - index.html
+              configuration-options:
+                files:
+                - index.html
+              environment-variables:
+                files:
+                - index.html
+              exit-codes:
+                files:
+                - index.html
+            comparison:
+              pm2-vs-pmdaemon:
+                files:
+                - index.html
+            configuration:
+              advanced-configuration:
+                files:
+                - index.html
+              best-practices:
+                files:
+                - index.html
+              ecosystem-files:
+                files:
+                - index.html
+              environment-specific:
+                files:
+                - index.html
+              process-configuration:
+                files:
+                - index.html
+              schema-validation:
+                files:
+                - index.html
+            examples:
+              clustering:
+                files:
+                - index.html
+              deployment-examples:
+                files:
+                - index.html
+              integration-examples:
+                files:
+                - index.html
+              use-cases:
+                files:
+                - index.html
+            features:
+              configuration:
+                files:
+                - index.html
+              cross-platform:
+                files:
+                - index.html
+              health-checks:
+                files:
+                - index.html
+              load-balancing:
+                files:
+                - index.html
+              monitoring:
+                files:
+                - index.html
+              port-management:
+                files:
+                - index.html
+              process-management:
+                files:
+                - index.html
+              web-api:
+                files:
+                - index.html
+            getting-started:
+              installation:
+                files:
+                - index.html
+              introduction:
+                files:
+                - index.html
+              migration-from-pm2:
+                files:
+                - index.html
+              quick-start:
+                files:
+                - index.html
+            monitoring:
+              overview:
+                files:
+                - index.html
+            performance:
+              optimization:
+                files:
+                - index.html
+            security:
+              overview:
+                files:
+                - index.html
+          img:
+            files:
+            - cli-enhanced.svg
+            - favicon-32x32.png
+            - favicon.ico
+            - health-checks.svg
+            - logo-small.png
+            - logo.png
+            - port-management.svg
+            - production-ready.svg
+            - rust-performance.svg
+            - web-api.svg
+          search:
+            files:
+            - index.html
+          files:
+          - '404.html'
+          - index.html
+          - opensearch.xml
+          - sitemap.xml
+        changelog:
+          files:
+          - '2025-05-25-v0.1.0.md'
+          - '2025-05-26-v0.1.1.md'
+          - '2025-05-27-v0.1.2.md'
+          - '2025-05-28-v0.1.3.md'
+          - '2025-05-29-v0.1.4.md'
+          - authors.yml
+        docs:
+          advanced:
+            files:
+            - clustering.md
+            - logging.md
+            - performance-tuning.md
+            - security.md
+            - troubleshooting.md
+          api:
+            files:
+            - api-examples.md
+            - authentication.md
+            - error-handling.md
+            - library-usage.md
+            - rest-api.md
+            - websocket-api.md
+          architecture:
+            files:
+            - overview.md
+          cli:
+            files:
+            - commands.md
+            - configuration-options.md
+            - environment-variables.md
+            - exit-codes.md
+          comparison:
+            files:
+            - pm2-vs-pmdaemon.md
+          configuration:
+            files:
+            - advanced-configuration.md
+            - best-practices.md
+            - ecosystem-files.md
+            - environment-specific.md
+            - process-configuration.md
+            - schema-validation.md
+          examples:
+            files:
+            - clustering.md
+            - deployment-examples.md
+            - integration-examples.md
+            - use-cases.md
+          features:
+            files:
+            - configuration.md
+            - cross-platform.md
+            - health-checks.md
+            - load-balancing.md
+            - monitoring.md
+            - port-management.md
+            - process-management.md
+            - web-api.md
+          getting-started:
+            files:
+            - installation.md
+            - introduction.md
+            - migration-from-pm2.md
+            - quick-start.md
+          monitoring:
+            files:
+            - overview.md
+          performance:
+            files:
+            - optimization.md
+          security:
+            files:
+            - overview.md
+        src:
+          components:
+            HomepageFeatures:
+              files:
+              - index.js
+              - styles.module.css
+          css:
+            files:
+            - custom.css
+          pages:
+            files:
+            - index.js
+            - index.module.css
+        static:
+          img:
+            files:
+            - cli-enhanced.svg
+            - favicon-32x32.png
+            - favicon.ico
+            - health-checks.svg
+            - logo-small.png
+            - logo.png
+            - port-management.svg
+            - production-ready.svg
+            - rust-performance.svg
+            - web-api.svg
+        files:
+        - bun.lock
+        - CROSS_PLATFORM.md
+        - DEPLOYMENT.md
+        - docusaurus.config.js
+        - package.json
+        - README.md
+        - RELEASE_NOTES_CROSS_PLATFORM.md
+        - sidebars.js
+      examples:
+        files:
+        - comprehensive_config_examples.bat
+        - comprehensive_config_examples.ps1
+        - comprehensive_config_examples.sh
+        - CONFIG_USAGE.md
+        - demo_delete_features.sh
+        - ecosystem.json
+        - ecosystem.schema.json
+        - ecosystem.toml
+        - ecosystem.yaml
+        - health_check_demo.rs
+        - README.md
+        - SCHEMA_VALIDATION.md
+        - simple.json
+        - test_all_formats.sh
+        - test_delete_functionality.sh
+      scripts:
+        files:
+        - test-cross-platform.sh
+      src:
+        bin:
+          files:
+          - pmdaemon.rs
+        files:
+        - config.rs
+        - error.rs
+        - health.rs
+        - lib.rs
+        - manager.rs
+        - monitoring.rs
+        - process.rs
+        - signals.rs
+        - web.rs
+      tests:
+        files:
+        - config_formats_test.rs
+        - e2e_tests.rs
+        - integration_tests.rs
+      files:
+      - Cargo.lock
+      - Cargo.toml
+      - CHANGELOG.md
+      - LICENSE
+      - README.md
+      - RELEASE.md
+      - simple_restart_test.json
+      - simple_uptime_test.json
+      - test_restart_count.sh
+      - test_script.sh
+      - test_status_display.sh
+      - test_uptime_calculation.rs
+      - working_test.json
+  files:
+  - Cargo.toml
+  - Dockerfile
+  - ecosystem.yaml
+  - GEMINI.md
+  - README.md
+  - RULES.md
+  - settings.json
+  - tree.yml
+

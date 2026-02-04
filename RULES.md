@@ -40,6 +40,16 @@
 - Use a reliable, high-availability target for connectivity checks (e.g., Cloudflare DNS `1.1.1.1`).
 - Audio alerts should be non-blocking. Run audio playback in `tokio::task::spawn_blocking`.
 
+## Yahoo Finance Server (`server_yahoo`)
+- **Architecture:**
+    - Maintain a single upstream WebSocket connection to Yahoo.
+    - Use `axum` for the downstream WebSocket server.
+    - Use `tokio::sync::broadcast` to distribute decoded Protobuf messages.
+    - Manage state (subscriptions) in a thread-safe `AppState` struct.
+- **Protobuf:**
+    - Use `prost` and `prost-build` for handling Yahoo's PricingData messages.
+    - Ensure the `.proto` file is kept in sync with Yahoo's format.
+
 ## Logging
 - Use `fern` for logging configuration.
 - Log to both `stderr` and a daily rotating file (e.g., `monitor_postgres_YYYY-MM-DD.log`).

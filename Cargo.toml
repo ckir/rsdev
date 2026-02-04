@@ -30,21 +30,23 @@ aes = "0.8.4"
 # Flexible concrete Error type built on std::error::Error.
 anyhow = "1.0.97"
 # An ergonomic and modular web framework built with Tokio, Tower, and Hyper.
-axum = "0.8.8"
+axum = { version = "0.8.4", features = ["ws"] }
+axum-server = { version = "0.7.1", features = ["tls-rustls"] }
 # A library for encoding and decoding data in Base64.
 base64 = "0.22.1"
 # A crate that provides traits and functions for block padding.
 block-padding = "0.3.3"
+bytes = "1"
 # A crate for implementing Cipher Block Chaining (CBC) mode for block ciphers.
 cbc = { version = "0.1.2", features = ["alloc"] }
 # A library for working with dates and times.
-chrono = { version = "0.4.43", default-features = false, features = ["serde"] }
+chrono = { version = "0.4", default-features = false, features = ["serde"] }
 # TimeZone implementations for chrono from the IANA database.
 chrono-tz = { version = "0.10.3", default-features = false }
 # A crate that provides traits for cryptographic ciphers.
 cipher = "0.4"
 # A simple-to-use, efficient, and full-featured command-line argument parser.
-clap = { version = "4.5.56", features = ["derive", "env"] }
+clap = { version = "4.5.29", features = ["derive", "env"] }
 # A dead-simple async pool for tokio-postgres.
 deadpool-postgres = "0.14.1"
 # A tiny library for finding standard locations of configuration and data files.
@@ -55,6 +57,7 @@ dotenvy = "0.15.7"
 env_logger = "0.11.8"
 # A configurable logger for Rust.
 fern = "0.7.1"
+futures-channel = "0.3"
 # Common utilities and extension traits for the futures-rs library.
 futures-util = "0.3.31"
 # A crate for finding files that match a glob pattern.
@@ -68,7 +71,7 @@ hostname = "0.4.0"
 # A parser for the JSON5 data format.
 json5 = "1.3.0"
 # A library for getting the local IP address of the current system.
-local-ip-address = "0.6.9"
+local-ip-address = "0.6.10"
 # A lightweight logging facade for Rust.
 log = "0.4.27"
 # A crate that provides support for configuration.
@@ -79,18 +82,20 @@ native-tls = "0.2.12"
 postgres-native-tls = "0.5"
 # Conversions between Rust and Postgres values.
 postgres-types = { version = "0.2.12", features = ["derive"] }
+prost = "0.14.3"
+prost-build = "0.14.3"
 # A crate for generating random numbers.
 rand = "0.9.1"
 # A Redis driver for Rust.
-redis = { version = "1.0.2", features = ["tokio-comp", "connection-manager", "tokio-native-tls-comp"] }
+redis = { version = "1.0.3", features = ["tokio-comp", "connection-manager"] }
 # A regular expression library for Rust.
-regex = "1.10"
+regex = "1.12.3"
 # An HTTP client library for Rust.
 reqwest = { version = "0.13.1", default-features = false, features = ["json", "native-tls", "blocking"] }
 # An audio playback library.
 rodio = { version = "0.21.1", default-features = false, features = ["playback", "symphonia-all"] }
 # A modern, safer, and faster TLS library.
-rustls = { version = "0.23", features = ["ring", "logging", "std", "tls12"] }
+rustls = { version = "0.23", features = ["ring"] }
 # A crate for loading TLS keys and certificates from native certificate stores.
 rustls-native-certs = "0.8"
 # A basic .pem file parser for keys and certificates.
@@ -102,7 +107,7 @@ serde = { version = "1.0.218", features = ["derive"] }
 # Macros 1.1 implementation of #[derive(Serialize, Deserialize)].
 serde_derive = "1.0.228"
 # A JSON serialization file format.
-serde_json = "1.0.149"
+serde_json = "1.0.139"
 # A JSON5 serialization file format.
 serde_json5 = "0.2.1"
 # A YAML serialization file format.
@@ -122,9 +127,10 @@ tokio-cron-scheduler = "0.15.1"
 # A utility for graceful shutdown of tokio applications.
 tokio-graceful = "0.2.2"
 # A native, asynchronous PostgreSQL client.
-tokio-postgres = {version = "0.7.16", features = ["with-serde_json-1", "with-chrono-0_4"]}
+tokio-postgres = { version = "0.7.13", features = ["with-chrono-0_4", "with-serde_json-1"] }
 # A rustls implementation for tokio-postgres.
 tokio-postgres-rustls = "0.13.0"
+tokio-tungstenite = { version = "0.26.2", features = ["rustls-tls-native-roots", "native-tls"] }
 # Application-level tracing for Rust.
 tracing = "0.1.41"
 # A tracing-appender based on localtime (chrono).
@@ -138,4 +144,4 @@ walkdir = "2.5.0"
 # A library for working with webpki roots.
 webpki-roots = "0.26"
 # A library for reading and writing ZIP archives.
-zip = "7.2.0"
+zip = "7.3.0"

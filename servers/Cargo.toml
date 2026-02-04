@@ -4,61 +4,44 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# A powerful, pragmatic, and extremely fast web framework for Rust.
 actix-web = { workspace = true }
-# Flexible concrete Error type built on std::error::Error.
 anyhow = { workspace = true }
-# An ergonomic and modular web framework built with Tokio, Tower, and Hyper.
 axum = { workspace = true }
-# A library for working with dates and times.
+axum-server = { workspace = true }
+base64 = { workspace = true }
+bytes = { workspace = true }
 chrono = { workspace = true }
-# TimeZone implementations for chrono from the IANA database.
 chrono-tz = { workspace = true }
-# A simple-to-use, efficient, and full-featured command-line argument parser.
 clap = { workspace = true }
-# A dead-simple async pool for tokio-postgres.
 deadpool-postgres = { workspace = true }
-# A tiny library for finding standard locations of configuration and data files.
 dirs = { workspace = true }
-# A well-maintained fork of the dotenv crate to load environment variables from a .env file.
 dotenvy = { workspace = true }
-# A logging implementation for `log` which is configured via an environment variable.
 env_logger = { workspace = true }
-# Common utilities and extension traits for the futures-rs library.
+fern = { workspace = true }
+futures-channel = { workspace = true }
 futures-util = { workspace = true }
-# A shared library for this project.
 lib_common = { workspace = true }
-# A lightweight logging facade for Rust.
 log = { workspace = true }
-# A Redis driver for Rust.
+prost = { workspace = true }
 redis = { workspace = true }
-# A modern, safer, and faster TLS library.
 rustls = { workspace = true }
-# A basic .pem file parser for keys and certificates.
 rustls-pemfile = { workspace = true }
-# Shared types for the rustls ecosystem.
 rustls-pki-types = { workspace = true }
-# A generic serialization/deserialization framework.
 serde = { workspace = true }
-# A JSON serialization file format.
 serde_json = { workspace = true }
-# Safe mutable static and non-const static initialization, and code execution at program startup/exit.
 static_init = { workspace = true }
-# An event-driven, non-blocking I/O platform for writing asynchronous I/O-backed applications.
 tokio = { workspace = true }
-# A library for scheduling tasks with cron-like expressions.
 tokio-cron-scheduler = { workspace = true }
-# A utility for graceful shutdown of tokio applications.
 tokio-graceful = { workspace = true }
-# A native, asynchronous PostgreSQL client.
 tokio-postgres = { workspace = true }
-# Application-level tracing for Rust.
+tokio-tungstenite = { workspace = true }
 tracing = { workspace = true }
-# A tracing-appender based on localtime (chrono).
 tracing-appender = { workspace = true }
-# Utilities for implementing and composing `tracing` subscribers.
 tracing-subscriber = { workspace = true }
 
+
+[build-dependencies]
+prost-build = { workspace = true }
 
 [[bin]]
 name = "server_speak"
@@ -79,3 +62,7 @@ path = "src/server_sql.rs"
 [[bin]]
 name = "server_dummy"
 path = "src/server_dummy.rs"
+
+[[bin]]
+name = "server_yahoo"
+path = "src/server_yahoo.rs"

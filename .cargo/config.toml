@@ -1,0 +1,2 @@
+[env]
+PROTOC = { value = "C:\\Users\\user\\Development\\Rust\\rsdev\\.vendor\\protoc\\bin\\protoc.exe", force = true }
