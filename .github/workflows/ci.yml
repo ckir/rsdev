@@ -19,6 +19,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install Protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
       - name: Build and Export Binaries
         run: docker build --output type=local,dest=./dist .
 
@@ -40,12 +43,12 @@ jobs:
           - name: debian-12-x64
             container: debian:12
             artifact_suffix: debian-12-x64
-            setup: apt-get update && apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs
+            setup: apt-get update && apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs protobuf-compiler
             bin_dir: target/release
           - name: debian-12-i386
             container: debian:12
             artifact_suffix: debian-12-i386
-            setup: dpkg --add-architecture i386 && apt-get update && apt-get install -y git curl build-essential gcc-multilib pkg-config libssl-dev:i386 libasound2-dev:i386 nodejs
+            setup: dpkg --add-architecture i386 && apt-get update && apt-get install -y git curl build-essential gcc-multilib pkg-config libssl-dev:i386 libasound2-dev:i386 nodejs protobuf-compiler
             rustup_opts: --target i686-unknown-linux-gnu
             cargo_opts: --target i686-unknown-linux-gnu
             pkg_config_path: /usr/lib/i386-linux-gnu/pkgconfig
@@ -53,7 +56,7 @@ jobs:
           - name: oracle-linux-8.10
             container: oraclelinux:8.10
             artifact_suffix: oracle-linux-8.10
-            setup: dnf install -y git gcc tar gzip findutils curl openssl-devel pkg-config alsa-lib-devel nodejs
+            setup: dnf install -y git gcc tar gzip findutils curl openssl-devel pkg-config alsa-lib-devel nodejs protobuf-compiler
             bin_dir: target/release
 
     runs-on: ubuntu-latest
@@ -97,6 +100,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Download Protoc
+        run: |
+          Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v33.5/protoc-33.5-win64.zip -OutFile protoc.zip
+          Expand-Archive -Path protoc.zip -DestinationPath protoc
+          echo "$PWD/protoc/bin" | Out-File -FilePath $GITHUB_PATH -Encoding Utf8 -Append
 
       - name: Build
         run: cargo build --release
