@@ -68,7 +68,7 @@ jobs:
       - name: Install Protoc
         run: |
           curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v33.5/${{ matrix.protoc_zip }}
-          unzip -o ${{ matrix.protoc_zip }} -d /usr/local
+          unzip -o ${{ matrix.protoc_zip }} -d ${{ github.workspace }}/protoc
           rm ${{ matrix.protoc_zip }}
 
       - name: Checkout code
@@ -83,6 +83,7 @@ jobs:
 
       - name: Build
         env:
+          PROTOC: ${{ github.workspace }}/protoc/bin/protoc
           PKG_CONFIG_PATH: ${{ matrix.pkg_config_path }}
           PKG_CONFIG_ALLOW_CROSS: 1
         run: cargo build --release ${{ matrix.cargo_opts }}

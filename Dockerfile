@@ -37,6 +37,8 @@ RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v33.5
     && unzip -o protoc-33.5-linux-x86_64.zip -d /usr/local \
     && rm protoc-33.5-linux-x86_64.zip
 
+ENV PROTOC=/usr/local/bin/protoc
+
 RUN rustup target add x86_64-unknown-linux-musl
 COPY --from=c-builder /usr/local/musl /usr/local/musl
 
