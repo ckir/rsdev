@@ -16,8 +16,6 @@ use futures_util::{StreamExt};
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::sync::broadcast;
-use base64::{Engine as _, engine::general_purpose};
-use prost::Message as ProstMessage;
 
 static NEXT_CLIENT_ID: AtomicUsize = AtomicUsize::new(1);
 
@@ -80,13 +78,33 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
                 if let Ok(msg) = msg {
                     match msg {
                         Message::Text(text) => {
+                            log::debug!("Received message from client {}: {}", client_id, text);
                             if let Ok(client_msg) = serde_json::from_str::<ClientMessage>(&text) {
+                                let mut ack_msg = ServerMessage {
+                                    r#type: "ack".to_string(),
+                                    message: None,
+                                    error: None,
+                                    ack: Some(true),
+                                };
+
                                 if let Some(symbols) = client_msg.subscribe {
-                                    state.subscribe(client_id, symbols);
+                                    log::info!("Client {} subscribing to: {:?}", client_id, &symbols);
+                                    state.subscribe(client_id, symbols.clone());
+                                    ack_msg.message = Some(serde_json::Value::String(format!("Subscribed to {:?}", symbols)));
                                 }
                                 if let Some(symbols) = client_msg.unsubscribe {
-                                    state.unsubscribe(client_id, symbols);
+                                    log::info!("Client {} unsubscribing from: {:?}", client_id, &symbols);
+                                    state.unsubscribe(client_id, symbols.clone());
+                                    ack_msg.message = Some(serde_json::Value::String(format!("Unsubscribed from {:?}", symbols)));
                                 }
+
+                                if let Ok(json_str) = serde_json::to_string(&ack_msg) {
+                                    if socket.send(Message::Text(json_str.into())).await.is_err() {
+                                        break; // client disconnected
+                                    }
+                                }
+                            } else {
+                                log::warn!("Failed to parse message from client {}: {}", client_id, text);
                             }
                         }
                         Message::Close(_) => {
@@ -101,19 +119,24 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
             }
             // Handle broadcasted data from the upstream
             Ok(pricing_data) = data_rx.recv() => {
+                log::debug!("Received pricing data to broadcast: {:?}", pricing_data);
                 if state.is_subscribed(client_id, &pricing_data.id) {
-                    let mut buf = Vec::new();
-                    if pricing_data.encode(&mut buf).is_ok() {
-                        let b64_msg = general_purpose::STANDARD.encode(&buf);
-                        let server_msg = ServerMessage {
-                            r#type: "pricing".to_string(),
-                            message: Some(b64_msg),
-                            error: None,
-                        };
-                        if let Ok(json_str) = serde_json::to_string(&server_msg) {
-                            if socket.send(Message::Text(json_str.into())).await.is_err() {
-                                break; // client disconnected
+                    match serde_json::to_value(&*pricing_data) {
+                        Ok(json_val) => {
+                            let server_msg = ServerMessage {
+                                r#type: "pricing".to_string(),
+                                message: Some(json_val),
+                                error: None,
+                                ack: None,
+                            };
+                            if let Ok(json_str) = serde_json::to_string(&server_msg) {
+                                if socket.send(Message::Text(json_str.into())).await.is_err() {
+                                    break; // client disconnected
+                                }
                             }
+                        }
+                        Err(e) => {
+                            log::error!("Failed to serialize pricing data to JSON: {}", e);
                         }
                     }
                 }

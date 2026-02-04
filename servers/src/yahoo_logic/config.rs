@@ -18,7 +18,7 @@ pub struct Config {
     #[clap(long, env = "YAHOO_LOG_LEVEL", default_value = "info")]
     pub log_level: String,
 
-    #[clap(long, env = "YAHOO_URL", default_value = "wss://streamer.finance.yahoo.com/")]
+    #[clap(long, env = "YAHOO_URL", default_value = "wss://streamer.finance.yahoo.com/?version=2")]
     pub yahoo_ws_url: String,
 
     #[clap(long, env = "YAHOO_PROTO_PATH")]

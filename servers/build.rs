@@ -1,5 +1,7 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=proto/PricingData.proto");
-    prost_build::compile_protos(&["proto/PricingData.proto"], &["proto/"])?;
+    let mut config = prost_build::Config::new();
+    config.type_attribute(".", "#[derive(serde::Serialize)]");
+    config.compile_protos(&["proto/PricingData.proto"], &["proto/"])?;
     Ok(())
 }

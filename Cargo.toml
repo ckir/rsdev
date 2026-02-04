@@ -139,6 +139,7 @@ tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
 # A URL parsing library.
 url = "2.5"
+http = "1.0.0"
 # A crate for recursively walking directory trees.
 walkdir = "2.5.0"
 # A library for working with webpki roots.

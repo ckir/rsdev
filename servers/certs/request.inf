@@ -1,9 +1,0 @@
-[NewRequest]
-Subject = "CN=localhost"
-Exportable = TRUE
-KeyLength = 2048
-KeySpec = 1
-KeyUsage = 0xA0
-MachineKeySet = False
-ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
-RequestType = Cert

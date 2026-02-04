@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClientMessage {
@@ -9,8 +10,9 @@ pub struct ClientMessage {
 #[derive(Debug, Clone, Serialize)]
 pub struct ServerMessage {
     pub r#type: String,
-    pub message: Option<String>, // Base64 encoded protobuf
+    pub message: Option<Value>,
     pub error: Option<String>,
+    pub ack: Option<bool>,
 }
 
 // #[derive(Debug, Clone)]
