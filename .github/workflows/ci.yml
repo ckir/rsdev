@@ -68,6 +68,7 @@ jobs:
       - name: Install Protoc
         run: |
           curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v33.5/${{ matrix.protoc_zip }}
+          mkdir -p ${{ github.workspace }}/protoc
           unzip -o ${{ matrix.protoc_zip }} -d ${{ github.workspace }}/protoc
           rm ${{ matrix.protoc_zip }}
 
