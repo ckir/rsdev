@@ -117,10 +117,11 @@ jobs:
           Expand-Archive -Path protoc.zip -DestinationPath protoc
 
       - name: Build
+        shell: pwsh
         env:
-          PROTOC: ${{ github.workspace }}/protoc/bin/protoc.exe
+          PROTOC: ${{ github.workspace }}\protoc\bin\protoc.exe
         run: |
-          echo "PROTOC environment variable inside build step: $PROTOC"
+          echo "PROTOC environment variable inside build step: $env:PROTOC"
           cargo build --release
 
       - name: Prepare Artifacts
