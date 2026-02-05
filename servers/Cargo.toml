@@ -42,7 +42,6 @@ url = { workspace = true }
 http = { workspace = true }
 
 
-
 [build-dependencies]
 prost-build = { workspace = true }
 
@@ -66,6 +65,6 @@ path = "src/server_sql.rs"
 name = "server_dummy"
 path = "src/server_dummy.rs"
 
-[[bin]]
-name = "server_yahoo"
-path = "src/server_yahoo.rs"
+#[[bin]]
+#name = "server_yahoo"
+#path = "src/server_yahoo.rs"

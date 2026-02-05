@@ -59,7 +59,7 @@ use chrono::TimeZone;
 use chrono_tz::America::New_York;
 use chrono_tz::Europe::London;
 
-use lib_common::sys_info::{ProcessInfo, ProcessInfoError, get_process_info};
+use lib_common::utils::misc::sys_info::{ProcessInfo, ProcessInfoError, get_process_info};
 #[path = "./libnasdaq.rs"]
 mod libnasdaq;
 use libnasdaq::*;

@@ -18,6 +18,10 @@ chrono = { workspace = true }
 chrono-tz = { workspace = true }
 # A crate that provides traits for cryptographic ciphers.
 cipher = { workspace = true }
+# For coloring terminal output
+colored = { workspace = true }
+# For finding files matching patterns
+glob = { workspace = true }
 # A library for encoding and decoding data in hexadecimal format.
 hex = { workspace = true }
 # A library for getting the hostname of the current system.

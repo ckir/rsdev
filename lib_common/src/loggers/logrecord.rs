@@ -4,14 +4,8 @@ use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use serde_json::Value;
 use static_init::dynamic;
-
-#[path = "./sys_info.rs"]
-mod sys_info;
-use sys_info::*;
-
-#[path = "./utils.rs"]
-mod utils;
-use utils::*;
+use crate::utils::misc::sys_info::{ProcessInfo, ProcessInfoError, get_process_info};
+use crate::utils::misc::utils::current_datetime_rfc9557;
 
 #[dynamic]
 pub static PROCESSINFO: Result<ProcessInfo, ProcessInfoError> = get_process_info();

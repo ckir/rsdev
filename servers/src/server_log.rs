@@ -1,5 +1,5 @@
 use lib_common::beep_with_hz_and_millis;
-use lib_common::logrecord::Logrecord;
+use lib_common::loggers::logrecord::Logrecord;
 
 fn main() {
     let middle_e_hz = 329;

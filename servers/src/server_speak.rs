@@ -34,8 +34,8 @@ use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
 use tokio_graceful::Shutdown;
 
 use lib_common::config_sys::{RuntimeConfig, RuntimeConfigError, get_runtime_config};
-use lib_common::logrecord::{Message, Voice};
-use lib_common::sys_info::{ProcessInfo, ProcessInfoError, get_process_info};
+use lib_common::loggers::logrecord::{Message, Voice};
+use lib_common::utils::misc::sys_info::{ProcessInfo, ProcessInfoError, get_process_info};
 
 // load .env files before anything else
 #[dynamic]
