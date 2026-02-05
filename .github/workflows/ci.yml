@@ -118,6 +118,13 @@ jobs:
           Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v33.5/protoc-33.5-win64.zip -OutFile protoc.zip
           Expand-Archive -Path protoc.zip -DestinationPath protoc
 
+      - name: Install Rust
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://win.rustup.rs -OutFile rustup-init.exe
+          ./rustup-init.exe -y --profile minimal
+          echo "$env:USERPROFILE\.cargo\bin" | Add-Content -Path $env:GITHUB_PATH
+
       - name: Build
         shell: pwsh
         env:
