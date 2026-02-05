@@ -40,13 +40,13 @@ jobs:
           - name: debian-12-x64
             container: debian:12
             artifact_suffix: debian-12-x64
-            setup: apt-get update && apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs unzip
+            setup: apt-get update && apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs unzip protobuf-compiler
             protoc_zip: protoc-33.5-linux-x86_64.zip
             bin_dir: target/release
           - name: debian-12-i386
             container: debian:12
             artifact_suffix: debian-12-i386
-            setup: dpkg --add-architecture i386 && apt-get update && apt-get install -y git curl build-essential gcc-multilib pkg-config libssl-dev:i386 libasound2-dev:i386 nodejs unzip
+            setup: dpkg --add-architecture i386 && apt-get update && apt-get install -y git curl build-essential gcc-multilib pkg-config libssl-dev:i386 libasound2-dev:i386 nodejs unzip protobuf-compiler
             protoc_zip: protoc-33.5-linux-x86_32.zip
             rustup_opts: --target i686-unknown-linux-gnu
             cargo_opts: --target i686-unknown-linux-gnu
@@ -55,7 +55,7 @@ jobs:
           - name: oracle-linux-8.10
             container: oraclelinux:8.10
             artifact_suffix: oracle-linux-8.10
-            setup: dnf install -y git gcc tar gzip findutils curl openssl-devel pkg-config alsa-lib-devel nodejs unzip
+            setup: dnf install -y git gcc tar gzip findutils curl openssl-devel pkg-config alsa-lib-devel nodejs unzip protobuf-compiler
             protoc_zip: protoc-33.5-linux-x86_64.zip
             bin_dir: target/release
 
@@ -64,15 +64,6 @@ jobs:
     steps:
       - name: Install Dependencies
         run: ${{ matrix.setup }}
-
-      - name: Install Protoc
-        run: |
-          curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v33.5/${{ matrix.protoc_zip }}
-          mkdir -p ${{ github.workspace }}/protoc
-          unzip -o ${{ matrix.protoc_zip }} -d ${{ github.workspace }}/protoc
-          rm ${{ matrix.protoc_zip }}
-          echo "PROTOC=${{ github.workspace }}/protoc/bin/protoc" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/protoc/bin" >> $GITHUB_PATH
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -88,12 +79,7 @@ jobs:
         env:
           PKG_CONFIG_PATH: ${{ matrix.pkg_config_path }}
           PKG_CONFIG_ALLOW_CROSS: 1
-        run: |
-          echo "PROTOC environment variable inside build step: $PROTOC"
-          echo "PATH environment variable inside build step: $PATH"
-          echo "Attempting to run protoc --version:"
-          protoc --version
-          cargo build --release ${{ matrix.cargo_opts }}
+        run: cargo build --release ${{ matrix.cargo_opts }}
 
       - name: Prepare Artifacts
         run: |
