@@ -21,6 +21,15 @@ pub struct Config {
     #[clap(long, env = "YAHOO_URL", default_value = "wss://streamer.finance.yahoo.com/?version=2")]
     pub yahoo_ws_url: String,
 
+    #[clap(long, env = "YAHOO_RECONNECT_BASE_DELAY_MS", default_value = "1000")]
+    pub reconnect_base_delay_ms: u64,
+
+    #[clap(long, env = "YAHOO_RECONNECT_MAX_DELAY_MS", default_value = "60000")]
+    pub reconnect_max_delay_ms: u64,
+
+    #[clap(long, env = "YAHOO_HEARTBEAT_THRESHOLD_SECONDS", default_value = "30")]
+    pub heartbeat_threshold_seconds: u64,
+
     #[clap(long, env = "YAHOO_PROTO_PATH")]
     pub proto_path: Option<PathBuf>,
 
@@ -48,6 +57,9 @@ pub fn load_config() -> Config {
             log_dir: cli_config.log_dir,
             log_level: cli_config.log_level,
             yahoo_ws_url: cli_config.yahoo_ws_url,
+            reconnect_base_delay_ms: cli_config.reconnect_base_delay_ms,
+            reconnect_max_delay_ms: cli_config.reconnect_max_delay_ms,
+            heartbeat_threshold_seconds: cli_config.heartbeat_threshold_seconds,
             proto_path: cli_config.proto_path.or(file_config.proto_path),
             tls_cert_path: cli_config.tls_cert_path.or(file_config.tls_cert_path),
             tls_key_path: cli_config.tls_key_path.or(file_config.tls_key_path),

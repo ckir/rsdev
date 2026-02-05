@@ -1,21 +1,18 @@
 use crate::yahoo_logic::config::Config;
-use crate::yahoo_logic::state::{AppState, UpstreamCommand};
+use crate::yahoo_logic::state::{AppState, UpstreamCommand, UpstreamRequest};
 use crate::yahoo_logic::yahoo_finance::PricingData;
 use base64::{engine::general_purpose, Engine as _};
 use futures_util::{
-    stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
 use prost::Message;
 use serde_json::json;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::net::TcpStream;
 use tokio::sync::{broadcast, mpsc};
-use tokio::time::sleep;
+use tokio::time::{interval, sleep, Instant};
 use tokio_tungstenite::{
     connect_async, tungstenite::protocol::Message as WsMessage,
-    MaybeTlsStream, WebSocketStream,
 };
 use http::Uri;
 
@@ -24,12 +21,27 @@ pub async fn run(
     app_state: AppState,
     mut shutdown: broadcast::Receiver<()>,
 ) {
-    let (cmd_tx, mut cmd_rx) = mpsc::unbounded_channel::<UpstreamCommand>();
-    app_state.set_upstream_tx(cmd_tx);
+    let (cmd_tx, mut cmd_rx) = mpsc::unbounded_channel::<UpstreamRequest>();
+    app_state.set_upstream_tx(cmd_tx).await;
+
+    let mut reconnect_attempts = 0;
 
     loop {
         if shutdown.try_recv().is_ok() {
             break;
+        }
+
+        if reconnect_attempts > 0 {
+            let delay = std::cmp::min(
+                config.reconnect_max_delay_ms,
+                config.reconnect_base_delay_ms * 2_u32.pow(reconnect_attempts - 1) as u64,
+            );
+            log::warn!(
+                "Reconnecting to Yahoo Finance in {}ms (attempt {})...",
+                delay,
+                reconnect_attempts
+            );
+            sleep(Duration::from_millis(delay)).await;
         }
 
         log::info!("Connecting to Yahoo Finance: {}", config.yahoo_ws_url);
@@ -50,11 +62,12 @@ pub async fn run(
 
         match connect_async(request).await {
             Ok((ws_stream, _)) => {
-                log::info!("Connected to Yahoo Finance");
-                let (mut write, mut read): (
-                    SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>,
-                    SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
-                ) = ws_stream.split();
+                log::info!("Successfully connected to Yahoo Finance.");
+                reconnect_attempts = 0; // Reset on successful connection
+                let (mut write, mut read) = ws_stream.split();
+
+                let mut last_message_time = Instant::now();
+                let mut heartbeat_interval = interval(Duration::from_secs(1));
 
                 loop {
                     tokio::select! {
@@ -63,28 +76,39 @@ pub async fn run(
                             let _ = write.close().await;
                             return;
                         }
-                        Some(cmd) = cmd_rx.recv() => {
-                            log::info!("Received command for upstream: {:?}", cmd);
-                            match cmd {
+                        Some(req) = cmd_rx.recv() => {
+                            let UpstreamRequest { command, responder } = req;
+                            log::info!("Received command for upstream: {:?}", command);
+
+                            let result = match command {
                                 UpstreamCommand::Subscribe(symbols) => {
                                     let msg = json!({ "subscribe": symbols }).to_string();
                                     log::debug!("Sending upstream: {}", msg);
-                                    if let Err(e) = write.send(WsMessage::Text(msg.into())).await {
-                                        log::error!("Failed to send subscribe: {}", e);
-                                        break; // Reconnect
-                                    }
+                                    write.send(WsMessage::Text(msg.into())).await
                                 }
                                 UpstreamCommand::Unsubscribe(symbols) => {
                                     let msg = json!({ "unsubscribe": symbols }).to_string();
                                     log::debug!("Sending upstream: {}", msg);
-                                    if let Err(e) = write.send(WsMessage::Text(msg.into())).await {
-                                        log::error!("Failed to send unsubscribe: {}", e);
-                                        break; // Reconnect
-                                    }
+                                    write.send(WsMessage::Text(msg.into())).await
                                 }
+                            };
+
+                            let ack_result = match result {
+                                Ok(_) => Ok(()),
+                                Err(e) => {
+                                    log::error!("Failed to send command to Yahoo: {}", e);
+                                    // Breaking here will trigger a reconnect, which is often what we want if we can't send.
+                                    break;
+                                }
+                            };
+                            
+                            // Send the acknowledgement. If it fails, the client is likely gone, so we just log it.
+                            if let Err(_) = responder.send(ack_result) {
+                                log::warn!("Failed to send acknowledgement to downstream client. It may have disconnected.");
                             }
                         }
                         Some(msg) = read.next() => {
+                            last_message_time = Instant::now(); // Reset timer on any message
                             match msg {
                                 Ok(WsMessage::Binary(data)) => {
                                     log::trace!("Received binary message from Yahoo: {} bytes", data.len());
@@ -112,7 +136,9 @@ pub async fn run(
                                         }
                                     }
                                 }
-                                Ok(WsMessage::Ping(_)) => {}
+                                Ok(WsMessage::Ping(_)) => {
+                                    log::trace!("Received Ping from Yahoo");
+                                }
                                 Err(e) => {
                                     log::error!("Upstream error: {}", e);
                                     break;
@@ -120,12 +146,18 @@ pub async fn run(
                                 _ => {}
                             }
                         }
+                        _ = heartbeat_interval.tick() => {
+                            if last_message_time.elapsed().as_secs() > config.heartbeat_threshold_seconds {
+                                log::warn!("Heartbeat lost. No message received for over {} seconds. Reconnecting...", config.heartbeat_threshold_seconds);
+                                break; // Trigger reconnect
+                            }
+                        }
                     }
                 }
             }
             Err(e) => {
                 log::error!("Failed to connect to Yahoo: {}", e);
-                sleep(Duration::from_secs(5)).await;
+                reconnect_attempts += 1;
             }
         }
     }

@@ -5,10 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "type": "lldb",
             "request": "launch",
             "name": "Debug monitor_redis",
-            "preRunCommands": [ "gci env:* | sort-object name" ],
+            "preRunCommands": [
+                "gci env:* | sort-object name"
+            ],
             "cargo": {
                 "args": [
                     "build",
@@ -79,7 +88,6 @@
                 "FrameworkVersion64": "v4.0.30319",
                 "WindowsSdkDir": "C:\\Program Files (x86)\\Windows Kits\\10\\"
             },
-
         }
     ]
 }

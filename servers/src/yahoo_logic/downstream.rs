@@ -66,7 +66,7 @@ async fn health_handler() -> impl IntoResponse {
 
 async fn handle_socket(mut socket: WebSocket, state: AppState) {
     let client_id = NEXT_CLIENT_ID.fetch_add(1, Ordering::Relaxed);
-    state.add_client(client_id);
+    state.add_client(client_id).await;
     log::info!("Client {} connected", client_id);
 
     let mut data_rx = state.data_tx.subscribe();
@@ -80,23 +80,29 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
                         Message::Text(text) => {
                             log::debug!("Received message from client {}: {}", client_id, text);
                             if let Ok(client_msg) = serde_json::from_str::<ClientMessage>(&text) {
-                                let mut ack_msg = ServerMessage {
-                                    r#type: "ack".to_string(),
-                                    message: None,
-                                    error: None,
-                                    ack: Some(true),
+                                // Since we await, we handle one command at a time and need to respond within the same block
+                                let (result, action, symbols) = if let Some(symbols) = client_msg.subscribe {
+                                    (state.subscribe(client_id, symbols.clone()).await, "subscribe", symbols)
+                                } else if let Some(symbols) = client_msg.unsubscribe {
+                                    (state.unsubscribe(client_id, symbols.clone()).await, "unsubscribe", symbols)
+                                } else {
+                                    continue; // Or handle empty message
                                 };
 
-                                if let Some(symbols) = client_msg.subscribe {
-                                    log::info!("Client {} subscribing to: {:?}", client_id, &symbols);
-                                    state.subscribe(client_id, symbols.clone());
-                                    ack_msg.message = Some(serde_json::Value::String(format!("Subscribed to {:?}", symbols)));
-                                }
-                                if let Some(symbols) = client_msg.unsubscribe {
-                                    log::info!("Client {} unsubscribing from: {:?}", client_id, &symbols);
-                                    state.unsubscribe(client_id, symbols.clone());
-                                    ack_msg.message = Some(serde_json::Value::String(format!("Unsubscribed from {:?}", symbols)));
-                                }
+                                let ack_msg = match result {
+                                    Ok(_) => ServerMessage {
+                                        r#type: "ack".to_string(),
+                                        message: Some(serde_json::Value::String(format!("Successfully processed {} for {:?}", action, symbols))),
+                                        error: None,
+                                        ack: Some(true),
+                                    },
+                                    Err(e) => ServerMessage {
+                                        r#type: "ack".to_string(),
+                                        message: Some(serde_json::Value::String(format!("Failed to process {} for {:?}: {}", action, symbols, e))),
+                                        error: Some(e),
+                                        ack: Some(false),
+                                    },
+                                };
 
                                 if let Ok(json_str) = serde_json::to_string(&ack_msg) {
                                     if socket.send(Message::Text(json_str.into())).await.is_err() {
@@ -105,6 +111,17 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
                                 }
                             } else {
                                 log::warn!("Failed to parse message from client {}: {}", client_id, text);
+                                let err_msg = ServerMessage {
+                                    r#type: "ack".to_string(),
+                                    message: Some(serde_json::Value::String("Failed to parse message.".to_string())),
+                                    error: Some("Invalid JSON format.".to_string()),
+                                    ack: Some(false),
+                                };
+                                if let Ok(json_str) = serde_json::to_string(&err_msg) {
+                                    if socket.send(Message::Text(json_str.into())).await.is_err() {
+                                        break; // client disconnected
+                                    }
+                                }
                             }
                         }
                         Message::Close(_) => {
@@ -120,7 +137,7 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
             // Handle broadcasted data from the upstream
             Ok(pricing_data) = data_rx.recv() => {
                 log::debug!("Received pricing data to broadcast: {:?}", pricing_data);
-                if state.is_subscribed(client_id, &pricing_data.id) {
+                if state.is_subscribed(client_id, &pricing_data.id).await {
                     match serde_json::to_value(&*pricing_data) {
                         Ok(json_val) => {
                             let server_msg = ServerMessage {
@@ -144,6 +161,6 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
         }
     }
 
-    state.remove_client(client_id);
+    state.remove_client(client_id).await;
     log::info!("Client {} disconnected", client_id);
 }

@@ -1,7 +1,16 @@
 use crate::yahoo_logic::yahoo_finance::PricingData;
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
-use tokio::sync::{broadcast, mpsc};
+use std::sync::Arc;
+use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
+
+// Result type for acknowledgements
+pub type AckResult = Result<(), String>;
+
+// Struct to wrap the command and a one-time channel for the response
+pub struct UpstreamRequest {
+    pub command: UpstreamCommand,
+    pub responder: oneshot::Sender<AckResult>,
+}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -10,7 +19,7 @@ pub struct AppState {
     // Map of symbol -> Count of clients subscribed
     symbol_counts: Arc<Mutex<HashMap<String, usize>>>,
     // Channel to send commands to the upstream client
-    upstream_tx: Arc<Mutex<Option<mpsc::UnboundedSender<UpstreamCommand>>>>,
+    upstream_tx: Arc<Mutex<Option<mpsc::UnboundedSender<UpstreamRequest>>>>,
     // Channel to broadcast pricing data to all clients
     pub data_tx: broadcast::Sender<Arc<PricingData>>,
 }
@@ -32,20 +41,20 @@ impl AppState {
         }
     }
 
-    pub fn set_upstream_tx(&self, tx: mpsc::UnboundedSender<UpstreamCommand>) {
-        let mut guard = self.upstream_tx.lock().unwrap();
+    pub async fn set_upstream_tx(&self, tx: mpsc::UnboundedSender<UpstreamRequest>) {
+        let mut guard = self.upstream_tx.lock().await;
         *guard = Some(tx);
     }
 
-    pub fn add_client(&self, client_id: usize) {
-        let mut subs = self.client_subscriptions.lock().unwrap();
+    pub async fn add_client(&self, client_id: usize) {
+        let mut subs = self.client_subscriptions.lock().await;
         subs.insert(client_id, HashSet::new());
     }
 
-    pub fn remove_client(&self, client_id: usize) {
-        let mut subs = self.client_subscriptions.lock().unwrap();
+    pub async fn remove_client(&self, client_id: usize) {
+        let mut subs = self.client_subscriptions.lock().await;
         if let Some(client_subs) = subs.remove(&client_id) {
-            let mut counts = self.symbol_counts.lock().unwrap();
+            let mut counts = self.symbol_counts.lock().await;
             let mut to_unsubscribe = Vec::new();
 
             for symbol in client_subs {
@@ -59,14 +68,16 @@ impl AppState {
             }
 
             if !to_unsubscribe.is_empty() {
-                self.send_upstream(UpstreamCommand::Unsubscribe(to_unsubscribe));
+                // We don't really need to wait for the ack here since the client is gone,
+                // but for consistency we can. We'll ignore the result.
+                let _ = self.send_upstream(UpstreamCommand::Unsubscribe(to_unsubscribe)).await;
             }
         }
     }
 
-    pub fn subscribe(&self, client_id: usize, symbols: Vec<String>) {
-        let mut subs = self.client_subscriptions.lock().unwrap();
-        let mut counts = self.symbol_counts.lock().unwrap();
+    pub async fn subscribe(&self, client_id: usize, symbols: Vec<String>) -> AckResult {
+        let mut subs = self.client_subscriptions.lock().await;
+        let mut counts = self.symbol_counts.lock().await;
         let mut to_subscribe = Vec::new();
 
         if let Some(client_subs) = subs.get_mut(&client_id) {
@@ -82,13 +93,15 @@ impl AppState {
         }
 
         if !to_subscribe.is_empty() {
-            self.send_upstream(UpstreamCommand::Subscribe(to_subscribe));
+            self.send_upstream(UpstreamCommand::Subscribe(to_subscribe)).await
+        } else {
+            Ok(()) // Nothing to do, but the command is "successful"
         }
     }
 
-    pub fn unsubscribe(&self, client_id: usize, symbols: Vec<String>) {
-        let mut subs = self.client_subscriptions.lock().unwrap();
-        let mut counts = self.symbol_counts.lock().unwrap();
+    pub async fn unsubscribe(&self, client_id: usize, symbols: Vec<String>) -> AckResult {
+        let mut subs = self.client_subscriptions.lock().await;
+        let mut counts = self.symbol_counts.lock().await;
         let mut to_unsubscribe = Vec::new();
 
         if let Some(client_subs) = subs.get_mut(&client_id) {
@@ -106,19 +119,36 @@ impl AppState {
         }
 
         if !to_unsubscribe.is_empty() {
-            self.send_upstream(UpstreamCommand::Unsubscribe(to_unsubscribe));
+            self.send_upstream(UpstreamCommand::Unsubscribe(to_unsubscribe)).await
+        } else {
+            Ok(()) // Nothing to do, but the command is "successful"
         }
     }
 
-    fn send_upstream(&self, cmd: UpstreamCommand) {
-        let guard = self.upstream_tx.lock().unwrap();
-        if let Some(tx) = &*guard {
-            let _ = tx.send(cmd);
+    async fn send_upstream(&self, cmd: UpstreamCommand) -> AckResult {
+        let (tx, rx) = oneshot::channel();
+        let request = UpstreamRequest {
+            command: cmd,
+            responder: tx,
+        };
+
+        {
+            let guard = self.upstream_tx.lock().await;
+            if let Some(tx_chan) = &*guard {
+                if tx_chan.send(request).is_err() {
+                    return Err("Failed to send command to upstream service.".to_string());
+                }
+            } else {
+                return Err("Upstream service not available.".to_string());
+            }
         }
+
+        // Wait for the response from the upstream task
+        rx.await.unwrap_or_else(|_| Err("No response from upstream service.".to_string()))
     }
 
-    pub fn is_subscribed(&self, client_id: usize, symbol: &str) -> bool {
-        let subs = self.client_subscriptions.lock().unwrap();
+    pub async fn is_subscribed(&self, client_id: usize, symbol: &str) -> bool {
+        let subs = self.client_subscriptions.lock().await;
         if let Some(client_subs) = subs.get(&client_id) {
             client_subs.contains(symbol)
         } else {
