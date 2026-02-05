@@ -72,6 +72,12 @@ jobs:
           unzip -o ${{ matrix.protoc_zip }} -d ${{ github.workspace }}/protoc
           rm ${{ matrix.protoc_zip }}
 
+      - name: Debug Protoc Path
+        run: |
+          echo "Listing contents of ${{ github.workspace }}/protoc:"
+          ls -R ${{ github.workspace }}/protoc
+          echo "PROTOC environment variable: $PROTOC"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
