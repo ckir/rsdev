@@ -71,6 +71,8 @@ jobs:
           mkdir -p ${{ github.workspace }}/protoc
           unzip -o ${{ matrix.protoc_zip }} -d ${{ github.workspace }}/protoc
           rm ${{ matrix.protoc_zip }}
+          echo "PROTOC=${{ github.workspace }}/protoc/bin/protoc" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/protoc/bin" >> $GITHUB_PATH
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -87,8 +89,6 @@ jobs:
           PKG_CONFIG_PATH: ${{ matrix.pkg_config_path }}
           PKG_CONFIG_ALLOW_CROSS: 1
         run: |
-          export PROTOC=${{ github.workspace }}/protoc/bin/protoc
-          export PATH="${{ github.workspace }}/protoc/bin:$PATH"
           echo "PROTOC environment variable inside build step: $PROTOC"
           echo "PATH environment variable inside build step: $PATH"
           echo "Attempting to run protoc --version:"
@@ -119,6 +119,8 @@ jobs:
         run: |
           Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v33.5/protoc-33.5-win64.zip -OutFile protoc.zip
           Expand-Archive -Path protoc.zip -DestinationPath protoc
+          echo "PROTOC=${{ github.workspace }}\protoc\bin\protoc.exe" >> $env:GITHUB_ENV
+          echo "${{ github.workspace }}\protoc\bin" >> $env:GITHUB_PATH
 
       - name: Install Rust
         shell: pwsh
@@ -129,14 +131,11 @@ jobs:
 
       - name: Build
         shell: pwsh
-        env:
-          PROTOC: ${{ github.workspace }}\protoc\bin\protoc.exe
-          Path: ${{ github.workspace }}\protoc\bin;${{ env.Path }}
         run: |
           echo "PROTOC environment variable inside build step: $env:PROTOC"
           echo "Path environment variable inside build step: $env:Path"
           echo "Attempting to run protoc --version:"
-          & "$env:PROTOC" --version # Explicitly execute protoc using its full path
+          protoc --version # Should now be found via PATH
           cargo build --release
 
       - name: Prepare Artifacts
