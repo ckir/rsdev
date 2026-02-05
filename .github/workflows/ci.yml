@@ -91,6 +91,8 @@ jobs:
           export PATH="${{ github.workspace }}/protoc/bin:$PATH"
           echo "PROTOC environment variable inside build step: $PROTOC"
           echo "PATH environment variable inside build step: $PATH"
+          echo "Attempting to run protoc --version:"
+          protoc --version
           cargo build --release ${{ matrix.cargo_opts }}
 
       - name: Prepare Artifacts
@@ -133,6 +135,8 @@ jobs:
         run: |
           echo "PROTOC environment variable inside build step: $env:PROTOC"
           echo "Path environment variable inside build step: $env:Path"
+          echo "Attempting to run protoc --version:"
+          & "$env:PROTOC" --version # Explicitly execute protoc using its full path
           cargo build --release
 
       - name: Prepare Artifacts
