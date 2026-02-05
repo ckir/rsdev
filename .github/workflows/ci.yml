@@ -88,7 +88,9 @@ jobs:
           PKG_CONFIG_ALLOW_CROSS: 1
         run: |
           export PROTOC=${{ github.workspace }}/protoc/bin/protoc
+          export PATH="${{ github.workspace }}/protoc/bin:$PATH"
           echo "PROTOC environment variable inside build step: $PROTOC"
+          echo "PATH environment variable inside build step: $PATH"
           cargo build --release ${{ matrix.cargo_opts }}
 
       - name: Prepare Artifacts
@@ -120,8 +122,10 @@ jobs:
         shell: pwsh
         env:
           PROTOC: ${{ github.workspace }}\protoc\bin\protoc.exe
+          Path: ${{ github.workspace }}\protoc\bin;${{ env.Path }}
         run: |
           echo "PROTOC environment variable inside build step: $env:PROTOC"
+          echo "Path environment variable inside build step: $env:Path"
           cargo build --release
 
       - name: Prepare Artifacts
