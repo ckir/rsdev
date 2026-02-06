@@ -41,13 +41,11 @@ jobs:
             container: debian:12
             artifact_suffix: debian-12-x64
             setup: apt-get update && apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs unzip
-            protoc_zip: protoc-33.5-linux-x86_64.zip
             bin_dir: target/release
           - name: debian-12-i386
             container: debian:12
             artifact_suffix: debian-12-i386
             setup: dpkg --add-architecture i386 && apt-get update && apt-get install -y git curl build-essential gcc-multilib pkg-config libssl-dev:i386 libasound2-dev:i386 nodejs unzip
-            protoc_zip: protoc-33.5-linux-x86_32.zip
             rustup_opts: --target i686-unknown-linux-gnu
             cargo_opts: --target i686-unknown-linux-gnu
             pkg_config_path: /usr/lib/i386-linux-gnu/pkgconfig
@@ -56,7 +54,6 @@ jobs:
             container: oraclelinux:8.10
             artifact_suffix: oracle-linux-8.10
             setup: dnf install -y git gcc tar gzip findutils curl openssl-devel pkg-config alsa-lib-devel nodejs unzip
-            protoc_zip: protoc-33.5-linux-x86_64.zip
             bin_dir: target/release
 
     runs-on: ubuntu-latest
@@ -64,20 +61,6 @@ jobs:
     steps:
       - name: Install Dependencies
         run: ${{ matrix.setup }}
-
-      - name: Setup Vendored Protoc
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/vendor/protoc
-          if [ "${{ matrix.name }}" = "debian-12-x64" ] || [ "${{ matrix.name }}" = "oracle-linux-8.10" ]; then
-            echo "PROTOC=$GITHUB_WORKSPACE/vendor/protoc/x64/bin/protoc" >> $GITHUB_ENV
-            echo "$GITHUB_WORKSPACE/vendor/protoc/x64/bin" >> $GITHUB_PATH
-          elif [ "${{ matrix.name }}" = "debian-12-i386" ]; then
-            echo "PROTOC=$GITHUB_WORKSPACE/vendor/protoc/x86/bin/protoc" >> $GITHUB_ENV
-            echo "$GITHUB_WORKSPACE/vendor/protoc/x86/bin" >> $GITHUB_PATH
-          fi
-          # Make sure the vendored protoc is executable
-          chmod +x $GITHUB_WORKSPACE/vendor/protoc/x64/bin/protoc || true
-          chmod +x $GITHUB_WORKSPACE/vendor/protoc/x86/bin/protoc || true
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -114,12 +97,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Setup Vendored Protoc
-        shell: pwsh
-        run: |
-          echo "PROTOC=$GITHUB_WORKSPACE\vendor\protoc\win\bin\protoc.exe" >> $env:GITHUB_ENV
-          echo "$GITHUB_WORKSPACE\vendor\protoc\win\bin" >> $env:GITHUB_PATH
 
       - name: Install Rust
         shell: pwsh

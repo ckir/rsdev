@@ -1,4 +1,4 @@
-use crate::yahoo_logic::yahoo_finance::PricingData;
+use crate::yahoo_logic::pricing_data::PricingData;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, oneshot, Mutex};

@@ -43,7 +43,6 @@ http = { workspace = true }
 
 
 [build-dependencies]
-prost-build = { workspace = true }
 
 [[bin]]
 name = "server_speak"

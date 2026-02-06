@@ -1,6 +1,6 @@
 use crate::yahoo_logic::config::Config;
 use crate::yahoo_logic::state::{AppState, UpstreamCommand, UpstreamRequest};
-use crate::yahoo_logic::yahoo_finance::PricingData;
+use crate::yahoo_logic::pricing_data::PricingData;
 use base64::{engine::general_purpose, Engine as _};
 use futures_util::{
     SinkExt, StreamExt,
