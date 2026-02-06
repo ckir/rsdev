@@ -10,7 +10,9 @@ async fn main() -> Result<()> {
     let _ = rustls::crypto::ring::default_provider().install_default();
 
     let config = config::load_config();
-    logger::setup_logging(&config.log_dir, &config.log_level)?;
+    let log_dir = config.log_dir.clone().unwrap_or_else(|| "./logs".into());
+    let log_level = config.log_level.clone().unwrap_or_else(|| "info".to_string());
+    logger::setup_logging(&log_dir, &log_level)?;
 
     let (shutdown_tx, _) = tokio::sync::broadcast::channel(1);
     let app_state = state::AppState::new();

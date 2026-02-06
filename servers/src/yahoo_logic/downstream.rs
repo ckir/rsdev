@@ -28,10 +28,10 @@ pub async fn run(
         .route("/health", get(health_handler))
         .with_state(app_state);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], config.port.unwrap_or(9002)));
     log::info!("Downstream server listening on {}", addr);
 
-    if let (Some(cert_path), Some(key_path)) = (config.tls_cert_path, config.tls_key_path) {
+    if let Some((cert_path, key_path)) = config.tls_cert_path.zip(config.tls_key_path) {
         let tls_config = RustlsConfig::from_pem_file(cert_path, key_path)
             .await
             .expect("Failed to load TLS configuration");

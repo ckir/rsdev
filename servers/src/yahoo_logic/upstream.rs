@@ -38,9 +38,12 @@ pub async fn run(
         }
 
         if reconnect_attempts > 0 {
+            let reconnect_base_delay_ms = config.reconnect_base_delay_ms.unwrap_or(1000);
+            let reconnect_max_delay_ms = config.reconnect_max_delay_ms.unwrap_or(60000);
+            
             let delay = std::cmp::min(
-                config.reconnect_max_delay_ms,
-                config.reconnect_base_delay_ms * 2_u32.pow(reconnect_attempts - 1) as u64,
+                reconnect_max_delay_ms,
+                reconnect_base_delay_ms * 2_u32.pow(reconnect_attempts - 1) as u64,
             );
             log::warn!(
                 "Reconnecting to Yahoo Finance in {}ms (attempt {})...",
@@ -50,6 +53,9 @@ pub async fn run(
             sleep(Duration::from_millis(delay)).await;
             app_state.notify_clients(Notification::UpstreamDisconnected);
         }
+
+        let yahoo_ws_url = config.yahoo_ws_url.as_ref().unwrap_or(&"wss://streamer.finance.yahoo.com/?version=2".to_string()).clone();
+        log::info!("Connecting to Yahoo Finance: {}", yahoo_ws_url);
 
         match connect_to_yahoo(&config).await {
             Ok(ws_stream) => {
@@ -147,8 +153,9 @@ pub async fn run(
                             }
                         }
                         _ = heartbeat_interval.tick() => {
-                            if last_message_time.elapsed().as_secs() > config.heartbeat_threshold_seconds {
-                                log::warn!("Heartbeat lost. No message received for over {} seconds. Reconnecting...", config.heartbeat_threshold_seconds);
+                            let heartbeat_threshold_seconds = config.heartbeat_threshold_seconds.unwrap_or(30);
+                            if last_message_time.elapsed().as_secs() > heartbeat_threshold_seconds {
+                                log::warn!("Heartbeat lost. No message received for over {} seconds. Reconnecting...", heartbeat_threshold_seconds);
                                 current_tx_sink = None; // Invalidate sink to trigger reconnect
                                 break; // Trigger reconnect
                             }
@@ -166,14 +173,15 @@ pub async fn run(
 }
 
 async fn connect_to_yahoo(config: &Config) -> anyhow::Result<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>> {
-    log::info!("Connecting to Yahoo Finance: {}", config.yahoo_ws_url);
+    let yahoo_ws_url = config.yahoo_ws_url.as_ref().unwrap_or(&"wss://streamer.finance.yahoo.com/?version=2".to_string()).clone();
+    log::info!("Connecting to Yahoo Finance: {}", yahoo_ws_url);
 
-    let uri = config.yahoo_ws_url.parse::<Uri>().unwrap();
+    let uri = yahoo_ws_url.parse::<Uri>().unwrap();
 
     let request = http::Request::builder()
         .method("GET")
         .uri(uri.clone())
-        .header("Host", uri.host().unwrap())
+        .header("Host", uri.host().unwrap_or_default())
         .header("Connection", "Upgrade")
         .header("Upgrade", "websocket")
         .header("Sec-WebSocket-Version", "13")
