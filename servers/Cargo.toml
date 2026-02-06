@@ -64,6 +64,6 @@ path = "src/server_sql.rs"
 name = "server_dummy"
 path = "src/server_dummy.rs"
 
-#[[bin]]
-#name = "server_yahoo"
-#path = "src/server_yahoo.rs"
+[[bin]]
+name = "server_yahoo"
+path = "src/server_yahoo.rs"
