@@ -2,7 +2,7 @@ use anyhow::Result;
 use tokio::signal;
 
 mod yahoo_logic;
-use yahoo_logic::{config, logger, state, upstream, downstream};
+use yahoo_logic::{config, logger, state, upstream, downstream, monitor};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -22,6 +22,12 @@ async fn main() -> Result<()> {
     ));
 
     let downstream_handle = tokio::spawn(downstream::run(
+        config.clone(),
+        app_state.clone(),
+        shutdown_tx.subscribe(),
+    ));
+
+    let monitor_handle = tokio::spawn(monitor::run(
         config.clone(),
         app_state.clone(),
         shutdown_tx.subscribe(),
@@ -51,7 +57,7 @@ async fn main() -> Result<()> {
     let _ = shutdown_tx.send(());
 
     // Wait for components to shut down
-    let _ = tokio::try_join!(upstream_handle, downstream_handle);
+    let _ = tokio::try_join!(upstream_handle, downstream_handle, monitor_handle);
 
     log::info!("Shutdown complete.");
     Ok(())

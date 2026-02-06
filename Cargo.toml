@@ -6,6 +6,7 @@ members = [
     "misc",
     "nasdaq",
     "servers",
+    "project_tests",
     "vendor/json5format",
     "vendor/pmdaemon"
 ]
@@ -113,6 +114,7 @@ serde_json = "1.0.139"
 serde_json5 = "0.2.1"
 # A YAML serialization file format.
 serde_yml = "0.0.12"
+tempfile = "3.24.0"
 # A crate that provides the SHA-2 family of hash functions.
 sha2 = "0.10"
 # Safe mutable static and non-const static initialization, and code execution at program startup/exit.

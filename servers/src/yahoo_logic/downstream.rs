@@ -1,8 +1,6 @@
-use axum_server::tls_rustls::RustlsConfig;
-// use std::path::PathBuf;
 use crate::yahoo_logic::config::Config;
 use crate::yahoo_logic::model::{ClientMessage, ServerMessage};
-use crate::yahoo_logic::state::AppState;
+use crate::yahoo_logic::state::{AppState};
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -12,7 +10,8 @@ use axum::{
     routing::get,
     Router,
 };
-use futures_util::{StreamExt};
+use axum_server::tls_rustls::RustlsConfig;
+use futures_util::StreamExt;
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::sync::broadcast;
@@ -70,6 +69,7 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
     log::info!("Client {} connected", client_id);
 
     let mut data_rx = state.data_tx.subscribe();
+    let mut notification_rx = state.notification_tx.subscribe();
 
     loop {
         tokio::select! {
@@ -155,6 +155,21 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
                         Err(e) => {
                             log::error!("Failed to serialize pricing data to JSON: {}", e);
                         }
+                    }
+                }
+            }
+            // Handle notifications from the AppState (e.g., upstream reconnects)
+            Ok(notification) = notification_rx.recv() => {
+                log::info!("Sending notification to client {}: {:?}", client_id, notification);
+                let server_msg = ServerMessage {
+                    r#type: "notification".to_string(),
+                    message: Some(serde_json::Value::String(format!("{:?}", notification))),
+                    error: None,
+                    ack: None,
+                };
+                if let Ok(json_str) = serde_json::to_string(&server_msg) {
+                    if socket.send(Message::Text(json_str.into())).await.is_err() {
+                        break; // client disconnected
                     }
                 }
             }

@@ -30,6 +30,12 @@ pub struct Config {
     #[clap(long, env = "YAHOO_HEARTBEAT_THRESHOLD_SECONDS", default_value = "30")]
     pub heartbeat_threshold_seconds: u64,
 
+    #[clap(long, env = "YAHOO_DATAFLOW_CHECK_INTERVAL_SECONDS", default_value = "10")]
+    pub dataflow_check_interval_seconds: u64,
+
+    #[clap(long, env = "YAHOO_DATAFLOW_INACTIVITY_THRESHOLD_SECONDS", default_value = "60")]
+    pub dataflow_inactivity_threshold_seconds: u64,
+
     #[clap(long, env = "YAHOO_PROTO_PATH")]
     pub proto_path: Option<PathBuf>,
 
@@ -60,6 +66,8 @@ pub fn load_config() -> Config {
             reconnect_base_delay_ms: cli_config.reconnect_base_delay_ms,
             reconnect_max_delay_ms: cli_config.reconnect_max_delay_ms,
             heartbeat_threshold_seconds: cli_config.heartbeat_threshold_seconds,
+            dataflow_check_interval_seconds: cli_config.dataflow_check_interval_seconds,
+            dataflow_inactivity_threshold_seconds: cli_config.dataflow_inactivity_threshold_seconds,
             proto_path: cli_config.proto_path.or(file_config.proto_path),
             tls_cert_path: cli_config.tls_cert_path.or(file_config.tls_cert_path),
             tls_key_path: cli_config.tls_key_path.or(file_config.tls_key_path),

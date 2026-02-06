@@ -1,0 +1,15 @@
+[package]
+name = "project_tests"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+lib_common = { path = "../lib_common" }
+tokio = { workspace = true, features = ["full"] } # Explicitly enable full features for tests
+tempfile = { workspace = true }
+serde_json = { workspace = true } # For Value in loggerlocal
+
+[[test]]
+name = "test_loggerlocal"
+path = "test_loggerlocal.rs"
+test = true
