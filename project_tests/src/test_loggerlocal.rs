@@ -4,8 +4,8 @@ use std::io::Read;
 use tempfile::tempdir;
 use tokio::time::{sleep, Duration};
 
-#[tokio::test]
-async fn test_loggerlocal_file_logging() {
+#[tokio::main]
+async fn main() {
     // Create a temporary directory for log files
     let temp_dir = tempdir().expect("Failed to create temporary directory");
     let log_dir_path = temp_dir.path().to_path_buf();

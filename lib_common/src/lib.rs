@@ -8,6 +8,7 @@ pub mod config_cloud;
 pub mod config_sys;
 pub mod loggers; // New parent module for logrecord and loggerlocal
 pub mod utils;   // New parent module for sys_info and utils
+pub mod retrieve; // New parent module for ky_http
 
 // Re-export everything
 pub use config_cloud::*;
@@ -16,6 +17,7 @@ pub use loggers::logrecord::*;
 pub use loggers::loggerlocal::*;
 pub use utils::misc::sys_info::*;
 pub use utils::misc::utils::*;
+pub use retrieve::ky_http::*;
 
 // pub fn add(left: u64, right: u64) -> u64 {
 //     left + right

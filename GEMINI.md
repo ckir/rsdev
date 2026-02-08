@@ -64,6 +64,7 @@ A standalone WebSocket proxy server for Yahoo Finance streaming data.
   - **Logging (`loggers/logrecord`, `loggers/loggerlocal`):** Provides structured logging capabilities based on `Logrecord` and a local logger (mimicking JavaScript's `LoggerLocal.mjs`) with features like colored TTY output, text-to-speech notifications, and timestamped file logging with rotation.
   - **System Information (`utils/misc/sys_info`):** Retrieves process and host-specific information.
   - **General Utilities (`utils/misc/utils`):** Contains common helper functions like datetime formatting.
+  - **API Client (`utils/ky_http`):** Provides an ergonomic HTTP client with built-in retries, prefix URL support, structured `ApiResponse` for robust error handling, and authentication capabilities.
   - **Dependency Management:** Adheres to workspace best practices with centralized dependency versioning in the top-level `Cargo.toml`.
 
 ## Tech Stack
@@ -71,7 +72,7 @@ A standalone WebSocket proxy server for Yahoo Finance streaming data.
 - **Database:** `tokio-postgres`, `redis`
 - **TLS:** `rustls`, `tokio-postgres-rustls`
 - **Logging:** `fern`, `log`
-- **HTTP Client:** `reqwest`
+- **HTTP Client:** `reqwest`, `reqwest-middleware`, `reqwest-retry`
 - **Audio:** `rodio`
 - **WebSockets:** `tokio-tungstenite`, `axum`
 - **Protobuf:** `prost`

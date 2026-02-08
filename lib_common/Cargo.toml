@@ -34,6 +34,9 @@ more-config = { workspace = true }
 postgres-types = { workspace = true }
 # An HTTP client library for Rust.
 reqwest = { workspace = true }
+reqwest-middleware = { workspace = true }
+reqwest-retry = { workspace = true }
+url = { workspace = true }
 # A generic serialization/deserialization framework.
 serde = { workspace = true }
 # Macros 1.1 implementation of #[derive(Serialize, Deserialize)].
