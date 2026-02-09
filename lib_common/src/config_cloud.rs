@@ -9,36 +9,77 @@ use std::env;
 use thiserror::Error;
 
 #[derive(Debug, Error, Clone)]
+/// # Cloud Configuration Error
+///
+/// Defines custom error types that can occur during the retrieval and decryption
+/// of cloud-based configuration.
 pub enum CloudConfigError {
+    /// An error occurred while accessing environment variables.
     #[error("Environment variable error: {0}")]
     VarError(#[from] env::VarError),
 
+    /// A required environment variable was not found.
     #[error("Missing environment variable: {0}")]
     MissingEnvVar(String),
 
+    /// An error occurred during network communication (HTTP request).
     #[error("Network error: {0}")]
     NetworkError(String),
 
+    /// An error occurred during the decryption process (e.g., invalid key, IV, or ciphertext).
     #[error("Decryption error: {0}")]
     DecryptionError(String),
 
+    /// An error occurred while parsing the decrypted content as JSON.
     #[error("JSON parse error: {0}")]
     JsonError(String),
 
+    /// The format of the retrieved encrypted data was invalid.
     #[error("Invalid data format: {0}")]
     InvalidData(String),
 }
 
-// Persist the JSON data in memory using a static initializer.
-// This ensures the data is retrieved and decrypted only once.
+/// Statically initialized `CLOUD_CONFIG` that holds the decrypted cloud configuration.
+///
+/// This ensures that the configuration is loaded and decrypted only once
+/// at application startup and then reused across all parts of the application.
+/// It wraps the `load_cloud_config` function, providing a thread-safe,
+/// lazy-initialized way to access the cloud configuration.
 #[dynamic]
 static CLOUD_CONFIG: Result<Value, CloudConfigError> = load_cloud_config(None, None);
 
+/// # Load Cloud Configuration
+///
+/// Retrieves, decrypts, and parses the application's cloud-based configuration.
+///
+/// This function performs the following steps:
+/// 1.  **Get Key & URL**: Obtains the AES decryption key (password) and the URL
+///     of the encrypted configuration file from environment variables (`WEBLIB_AES_PASSWORD`,
+///     `WEBLIB_CLOUD_CONFIG_URL`) or optional arguments.
+/// 2.  **Fetch Encrypted Content**: Makes an HTTP GET request to the specified URL
+///     to fetch the encrypted configuration file.
+/// 3.  **Parse Encrypted Data**: The fetched content is expected to be two Base64-encoded
+///     lines: the Initialization Vector (IV) and the ciphertext. These are decoded.
+/// 4.  **Decrypt**: The ciphertext is decrypted using AES-256 CBC mode with the
+///     retrieved key and IV. PKCS7 padding is removed.
+/// 5.  **Parse JSON**: The decrypted plaintext is parsed as a JSON `serde_json::Value`.
+///
+/// All steps include robust error handling, returning a `CloudConfigError` on failure.
+///
+/// # Arguments
+/// * `url` - An optional `String` to explicitly provide the URL for the encrypted config.
+///   If `None`, it defaults to the `WEBLIB_CLOUD_CONFIG_URL` environment variable.
+/// * `password` - An optional `String` to explicitly provide the AES decryption password.
+///   If `None`, it defaults to the `WEBLIB_AES_PASSWORD` environment variable.
+///
+/// # Returns
+/// A `Result<Value, CloudConfigError>` containing the decrypted and parsed JSON configuration
+/// on success, or a `CloudConfigError` on failure.
 pub fn load_cloud_config(
     url: Option<String>,
     password: Option<String>,
 ) -> Result<Value, CloudConfigError> {
-    // 1. Check Environment Variables
+    /// 1. Retrieve the AES decryption password from arguments or environment variables.
     let password = password
         .or_else(|| env::var("WEBLIB_AES_PASSWORD").ok())
         .ok_or_else(|| CloudConfigError::MissingEnvVar("WEBLIB_AES_PASSWORD".to_string()))?;
@@ -46,12 +87,13 @@ pub fn load_cloud_config(
     // Ensure password is clean (remove whitespace/newlines)
     let password = password.trim();
 
+    /// 1. Retrieve the URL for the encrypted configuration file from arguments or environment variables.
     let url = url
         .or_else(|| env::var("WEBLIB_CLOUD_CONFIG_URL").ok())
         .ok_or_else(|| CloudConfigError::MissingEnvVar("WEBLIB_CLOUD_CONFIG_URL".to_string()))?;
     // println!("URL: {}", url);
 
-    // 2. Retrieve the encrypted file
+    /// 2. Fetch the encrypted file content via an HTTP GET request.
     let client = Client::new();
     let response = client
         .get(&url)
@@ -69,7 +111,7 @@ pub fn load_cloud_config(
         .text()
         .map_err(|e| CloudConfigError::NetworkError(e.to_string()))?;
 
-    // Robust line parsing: trim lines and ignore empty ones
+    /// 3. Parse the fetched content, which is expected to be Base64-encoded IV and ciphertext on separate lines.
     let lines: Vec<&str> = content
         .lines()
         .map(|l| l.trim())
@@ -86,16 +128,18 @@ pub fn load_cloud_config(
     let iv_base64 = lines[0];
     let ciphertext_base64 = lines[1];
 
+    /// Decode the Base64-encoded IV.
     let iv = general_purpose::STANDARD
         .decode(iv_base64)
         .map_err(|e| CloudConfigError::InvalidData(format!("Invalid Base64 IV: {}", e)))?;
 
+    /// Decode the Base64-encoded ciphertext.
     let ciphertext = general_purpose::STANDARD
         .decode(ciphertext_base64)
         .map_err(|e| CloudConfigError::InvalidData(format!("Invalid Base64 Ciphertext: {}", e)))?;
 
-    // 3. Decrypt the content
-    // Scheme: Key = Hex decode(password)
+    /// 4. Decrypt the content using AES-256 CBC mode.
+    /// Hex-decodes the password to get the 32-byte AES key.
     let key_vec = hex::decode(password)
         .map_err(|e| CloudConfigError::DecryptionError(format!("Invalid Key Hex: {}", e)))?;
 
@@ -112,8 +156,10 @@ pub fn load_cloud_config(
         .try_into()
         .map_err(|_| CloudConfigError::InvalidData(format!("Invalid IV length: {}", iv.len())))?;
 
+    /// Initializes the AES-256 CBC decryptor with the key and IV.
     let decryptor = Decryptor::<Aes256>::new(&key_arr.into(), &iv_arr.into());
 
+    /// Performs the decryption with PKCS7 padding removal.
     let mut buf = ciphertext.to_vec();
     if buf.is_empty() {
         return Err(CloudConfigError::DecryptionError(
@@ -130,13 +176,25 @@ pub fn load_cloud_config(
             ))
         })?;
 
-    // 4. Parse JSON
+    /// 5. Parses the decrypted data as JSON.
     let json: Value = serde_json::from_slice(decrypted_data)
         .map_err(|e| CloudConfigError::JsonError(e.to_string()))?;
 
     Ok(json)
 }
 
+/// # Get Cloud Configuration
+///
+/// Returns a clone of the globally cached, decrypted cloud configuration.
+///
+/// This function provides a convenient way to access the cloud configuration
+/// without re-fetching and re-decrypting it, as it leverages the `CLOUD_CONFIG`
+/// static initializer.
+///
+/// # Returns
+/// A `Result<Value, CloudConfigError>` containing a clone of the parsed JSON
+/// configuration on success, or a `CloudConfigError` if the initial loading/decryption
+/// failed.
 pub fn get_cloud_config() -> Result<Value, CloudConfigError> {
     match &*CLOUD_CONFIG {
         Ok(val) => Ok(val.clone()),
