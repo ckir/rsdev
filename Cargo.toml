@@ -4,7 +4,6 @@ members = [
     "cli",
     "lib_common",
     "misc",
-    "nasdaq",
     "servers",
     "project_tests",
     "vendor/json5format",
