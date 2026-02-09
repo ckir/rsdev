@@ -1,6 +1,7 @@
 use crate::markets::nasdaq::apicall::ApiCall;
 use crate::loggers::loggerlocal::LoggerLocal;
-use chrono::{NaiveDateTime, Local, Duration};
+use chrono::{NaiveDateTime, NaiveDate, Utc, Duration};
+use chrono_tz::US::Eastern;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use std::sync::Arc;
@@ -44,65 +45,71 @@ impl MarketStatus {
         Self { api_call, logger }
     }
 
-    pub async fn get_status(&self) -> Result<MarketStatusData, Box<dyn std::error::Error>> {
+    pub async fn get_status(&self) -> Result<MarketStatusData, Box<dyn std::error::Error + Send + Sync>> {
         let path = "api/market-info";
 
-        let raw_json: Value = match self.api_call.fetch_nasdaq(path).await {
-            Ok(val) => val,
-            Err(e) => return Err(e),
-        };
+        let raw_json: Value = self.api_call.fetch_nasdaq(path).await
+            .map_err(|e| format!("Nasdaq API Fetch Error: {}", e))?;
 
-        match from_value::<MarketStatusData>(raw_json.clone()) {
+        let data_part = raw_json.get("data").unwrap_or(&raw_json);
+
+        match from_value::<MarketStatusData>(data_part.clone()) {
             Ok(data) => {
                 self.logger.debug("Market status schema validated successfully", None).await;
                 Ok(data)
             }
             Err(e) => {
                 let error_message = format!("STRICT SCHEMA VALIDATION FAILED: {}", e);
-                self.logger.fatal(
-                    &error_message,
-                    Some(serde_json::json!({
-                        "endpoint": path,
-                        "error_details": e.to_string(),
-                        "received_payload": raw_json
-                    })),
-                ).await;
+                self.logger.fatal(&error_message, Some(serde_json::json!({"payload": raw_json}))).await;
                 Err(error_message.into())
             }
         }
     }
 }
 
-/// Represents the possible upcoming market milestones
-#[derive(Debug)]
-pub enum MarketEvent {
-    PreMarketOpen(Duration),
-    RegularMarketOpen(Duration),
-    RegularMarketClose(Duration),
-    AfterHoursClose(Duration),
-    MarketOffline,
-}
-
 impl MarketStatusData {
-    /// Calculates the next market event based on the current system time.
-    /// Returns the type of event and the duration remaining.
-    pub fn get_next_event(&self) -> MarketEvent {
-        let now = Local::now().naive_local();
+    /// Gets current time specifically in New York timezone
+    fn now_ny(&self) -> NaiveDateTime {
+        Utc::now().with_timezone(&Eastern).naive_local()
+    }
 
-        if now < self.pm_open_raw {
-            MarketEvent::PreMarketOpen(self.pm_open_raw - now)
-        } else if now < self.open_raw {
-            MarketEvent::RegularMarketOpen(self.open_raw - now)
-        } else if now < self.close_raw {
-            MarketEvent::RegularMarketClose(self.close_raw - now)
-        } else if now < self.ah_close_raw {
-            MarketEvent::AfterHoursClose(self.ah_close_raw - now)
+    pub fn get_sleep_duration(&self) -> std::time::Duration {
+        let now = self.now_ny();
+        
+        if self.mrkt_status == "Open" {
+            return std::time::Duration::from_secs(0);
+        }
+
+        // Determine target from raw timestamps
+        let mut target = if now < self.pm_open_raw { 
+            self.pm_open_raw 
+        } else { 
+            self.open_raw 
+        };
+
+        // If timestamps are in the past (Weekend/Holiday), use next_trade_date
+        if target <= now {
+            let fmt = "%b %d, %Y";
+            if let Ok(next_date) = NaiveDate::parse_from_str(&self.next_trade_date, fmt) {
+                // Point to 04:00 AM NY on the next trading day
+                if let Some(anchored) = next_date.and_hms_opt(4, 0, 0) {
+                    target = anchored;
+                }
+            }
+        }
+
+        if target > now {
+            let diff = target - now;
+            println!("Target NY Open: {} ({} remaining)", 
+                target.format("%Y-%m-%d %H:%M:%S"), 
+                Self::format_duration(diff)
+            );
+            diff.to_std().unwrap_or(std::time::Duration::from_secs(60))
         } else {
-            MarketEvent::MarketOffline
+            std::time::Duration::from_secs(300)
         }
     }
 
-    /// Formats the duration into a human-readable string: "HH:MM:SS"
     pub fn format_duration(dur: Duration) -> String {
         let total_secs = dur.num_seconds();
         let hours = total_secs / 3600;

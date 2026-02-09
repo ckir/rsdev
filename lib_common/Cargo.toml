@@ -4,52 +4,80 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# A cross-platform library that provides easy-to-use beep functions.
-actually_beep = { workspace = true }
-# A crate for implementing AES block ciphers.
-aes = { workspace = true }
-# A library for encoding and decoding data in Base64.
-base64 = { workspace = true }
-# A crate for implementing Cipher Block Chaining (CBC) mode for block ciphers.
-cbc = { workspace = true }
-# A library for working with dates and times.
-chrono = { workspace = true }
-# TimeZone implementations for chrono from the IANA database.
-chrono-tz = { workspace = true }
-# A crate that provides traits for cryptographic ciphers.
-cipher = { workspace = true }
-# For coloring terminal output
-colored = { workspace = true }
-# For finding files matching patterns
-glob = { workspace = true }
-# A library for encoding and decoding data in hexadecimal format.
-hex = { workspace = true }
-# A library for getting the hostname of the current system.
-hostname = { workspace = true }
-# A library for getting the local IP address of the current system.
-local-ip-address = { workspace = true }
-# A crate that provides support for configuration.
-more-config = { workspace = true }
-# Conversions between Rust and Postgres values.
-postgres-types = { workspace = true }
+# --- ReStream Core & Async Utilities ---
+# An event-driven, non-blocking I/O platform for writing asynchronous I/O-backed applications.
+tokio = { workspace = true }
+# Common utilities and extension traits for the futures-rs library (required for StreamExt/SinkExt).
+futures-util = { workspace = true }
+# A utility for token-based cancellation of asynchronous tasks.
+tokio-util = { workspace = true }
+# Tokio binding for Tungstenite, the lightweight stream-based WebSocket implementation.
+tokio-tungstenite = { workspace = true }
+
+# --- Networking & API ---
 # An HTTP client library for Rust.
 reqwest = { workspace = true }
+# Composable HTTP client middleware for reqwest.
 reqwest-middleware = { workspace = true }
+# Retry middleware for reqwest.
 reqwest-retry = { workspace = true }
+# A URL parsing library.
 url = { workspace = true }
+
+# --- Serialization & Data Formats ---
 # A generic serialization/deserialization framework.
 serde = { workspace = true }
 # Macros 1.1 implementation of #[derive(Serialize, Deserialize)].
 serde_derive = { workspace = true }
 # A JSON serialization file format.
 serde_json = { workspace = true }
-# A crate that provides the SHA-2 family of hash functions.
-sha2 = { workspace = true }
-# Safe mutable static and non-const static initialization, and code execution at program startup/exit.
-static_init = { workspace = true }
-# This library provides a convenient derive macro for the standard library’s std::error::Error trait.
-thiserror = { workspace = true }
-# An event-driven, non-blocking I/O platform for writing asynchronous I/O-backed applications.
-tokio = { workspace = true }
+# Conversions between Rust and Postgres values.
+postgres-types = { workspace = true }
+
+# --- Database & Storage ---
 # A native, asynchronous PostgreSQL client.
 tokio-postgres = { workspace = true }
+
+# --- Logging & Error Handling ---
+# A lightweight logging facade for Rust.
+log = { workspace = true }
+# Flexible concrete Error type built on std::error::Error.
+anyhow = { workspace = true }
+# This library provides a convenient derive macro for the standard library’s std::error::Error trait.
+thiserror = { workspace = true }
+
+# --- Cryptography & Security ---
+# A crate for implementing AES block ciphers.
+aes = { workspace = true }
+# A library for encoding and decoding data in Base64.
+base64 = { workspace = true }
+# A crate for implementing Cipher Block Chaining (CBC) mode for block ciphers.
+cbc = { workspace = true }
+# A crate that provides traits for cryptographic ciphers.
+cipher = { workspace = true }
+# A library for encoding and decoding data in hexadecimal format.
+hex = { workspace = true }
+# A crate that provides the SHA-2 family of hash functions.
+sha2 = { workspace = true }
+
+# --- System & Utilities ---
+# A library for working with dates and times.
+chrono = { workspace = true }
+# TimeZone implementations for chrono from the IANA database.
+chrono-tz = { workspace = true }
+# For coloring terminal output.
+colored = { workspace = true }
+# For finding files matching patterns.
+glob = { workspace = true }
+# A library for getting the hostname of the current system.
+hostname = { workspace = true }
+# A library for getting the local IP address of the current system.
+local-ip-address = { workspace = true }
+# A crate that provides support for configuration.
+more-config = { workspace = true }
+# Safe mutable static and non-const static initialization, and code execution at program startup/exit.
+static_init = { workspace = true }
+
+# --- Audio & Feedback ---
+# A cross-platform library that provides easy-to-use beep functions.
+actually_beep = { workspace = true }

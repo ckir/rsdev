@@ -1,78 +1,56 @@
 # Project: rsdev
 
 ## Overview
-This repository contains various Rust utilities and monitoring tools designed for reliability and cloud infrastructure monitoring.
+This repository contains various Rust utilities and monitoring tools designed for reliability, high-performance market data distribution, and cloud infrastructure monitoring.
 
 ## Key Components
 
-### `misc` Crate
-Located in `misc/`, this crate contains standalone binaries for monitoring services.
+### `lib_common` (The Core Engine)
+The heart of the workspace, providing a high-performance framework for real-time data.
 
-#### 1. `monitor_postgres`
-Monitors PostgreSQL instances defined in a central cloud configuration.
-- **Purpose:** Ensures database availability and sends alerts upon failure.
-- **Key Features:**
-  - Supports multiple providers (Supabase, Neon, Aiven, Local).
-  - Handles both connection strings (`dbUrl`) and connection objects (`dbConnection`).
-  - Sends JSON-formatted alerts to Primary and Failover webhook endpoints.
-- **Critical Implementation Details:**
-  - **PgBouncer Compatibility:** Uses `simple_query` API to bypass prepared statements, which are incompatible with transaction poolers (e.g., Supabase port 6543).
-  - **Unified TLS Strategy:**
-    - Uses `rustls` for all connections to ensure cross-platform consistency and modern security.
-    - **Supabase Specifics:**
-      - Enforces `ssl_mode=require`.
-      - Uses a custom `NoVerifier` to disable certificate verification for Supabase connections. This is a pragmatic solution to bypass root certificate trust issues on Windows/Linux environments while maintaining encryption.
-    - **Standard Connections:**
-      - Uses `rustls` with `webpki-roots` and `rustls-native-certs` for full verification.
-      - Enforces ALPN `postgresql`.
+#### 1. `core` Module (The Gateway Chassis)
+- **Registry (`registry.rs`):** Manages symbol lifecycle with reference counting and a "Linger" logic (using `CancellationToken`) to prevent redundant upstream resubscriptions.
+- **Memory Guard (`memory_guard.rs`):** A lock-free `AtomicU64` tracker that monitors global heap consumption across all client buffers to prevent OOM (Out of Memory) crashes.
+- **Dispatcher (`dispatcher.rs`):** A Zero-Copy fan-out engine using `Arc<T>` to broadcast messages to multiple clients with priority-based eviction for slow consumers.
+- **Upstream Manager (`upstream_manager.rs`):** The "Conductor" that monitors market hours and coordinates failover between Streaming and Polling modes.
 
-#### 2. `monitor_redis`
-Monitors Redis instances.
-- **Purpose:** Verifies Redis connectivity and responsiveness.
-- **Key Features:**
-  - Performs `PING` checks.
-  - Updates a `LASTCHECKED` timestamp key.
-  - Masks passwords in logs for security.
-
-#### 3. `monitor_net`
-Monitors local internet connectivity.
-- **Purpose:** Detects network outages and provides audible feedback.
-- **Key Features:**
-  - Checks connectivity to Cloudflare (1.1.1.1:53).
-  - Plays `Disconnected.wav` via `rodio` upon connection loss.
-  - Logs outage duration.
+#### 2. `ingestors` Module (Data Acquisition)
+- **Yahoo WSS:** High-speed WebSocket client with Protobuf v2 decoding and "Silent Failure" detection via inactivity timeouts.
+- **CNN Polling:** A self-scheduling REST client for macro indicators (e.g., Fear & Greed) that determines its own next-poll interval based on volatility.
 
 ### `servers` Crate
-Located in `servers/`, this crate contains server applications.
+Located in `servers/`, this crate contains the gateway and proxy applications.
 
-#### 1. `server_yahoo`
-A standalone WebSocket proxy server for Yahoo Finance streaming data.
-- **Purpose:** Multiplexes a single Yahoo Finance WebSocket connection to multiple downstream clients.
-- **Key Features:**
-  - **Single Upstream Connection:** Maintains one connection to Yahoo to avoid rate limits.
-  - **Robust Connection Handling:** Implements exponential backoff for reconnections and heartbeat detection to manage stale connections.
-  - **Client Command Acknowledgments:** Provides a request-response mechanism for client `subscribe`/`unsubscribe` commands, ensuring clients receive proper acknowledgments.
-  - **Client Isolation:** Each client manages its own subscriptions independently.
-  - **Efficient Broadcasting:** Decodes Protobuf messages once and broadcasts them to interested clients.
-  - **Graceful Shutdown:** Handles SIGINT/SIGTERM to close connections cleanly.
-  - **Logging:** Uses `fern` for file-based logging with daily rotation.
+#### 1. `restream` (Binary: `servers/src/restream.rs`)
+The flagship data distribution gateway.
+- **Purpose:** Centralizes market data flow to avoid upstream rate limits and provides low-latency distribution to local internal tools.
+- **Telemetry:** Implements **Triple-Timestamping** (`ts_upstream`, `ts_library_in`, `ts_library_out`) for microsecond-level performance profiling.
 
-## Shared Libraries
-- **`lib_common`**: Contains shared logic and utilities, now organized into specific modules for better maintainability and reusability.
-  - **Cloud Configuration (`config_cloud`):** Primarily for loading and parsing encrypted cloud configuration JSON.
-  - **System Configuration (`config_sys`):** Handles runtime configuration loading from multiple sources.
-  - **Logging (`loggers/logrecord`, `loggers/loggerlocal`):** Provides structured logging capabilities based on `Logrecord` and a local logger (mimicking JavaScript's `LoggerLocal.mjs`) with features like colored TTY output, text-to-speech notifications, and timestamped file logging with rotation.
-  - **System Information (`utils/misc/sys_info`):** Retrieves process and host-specific information.
-  - **General Utilities (`utils/misc/utils`):** Contains common helper functions like datetime formatting.
-  - **API Client (`utils/ky_http`):** Provides an ergonomic HTTP client with built-in retries, prefix URL support, structured `ApiResponse` for robust error handling, and authentication capabilities.
-  - **Dependency Management:** Adheres to workspace best practices with centralized dependency versioning in the top-level `Cargo.toml`.
+#### 2. `server_yahoo`
+A standalone WebSocket proxy for legacy Yahoo Finance streaming support.
+
+### `misc` Crate
+Located in `misc/`, contains standalone monitoring binaries.
+
+#### 1. `monitor_postgres`
+- **PgBouncer Compatibility:** Uses `simple_query` to support transaction poolers (Supabase/Neon).
+- **Unified TLS:** Standardizes on `rustls` with custom verifiers for Supabase to ensure cross-platform encryption consistency.
+
+#### 2. `monitor_redis`
+Verifies Redis connectivity, performs `PING` checks, and updates heartbeat timestamps.
+
+#### 3. `monitor_net`
+Detects network outages with audible feedback via `rodio` and logs downtime duration.
+
+## Shared Libraries (Utilities)
+- **Cloud Config:** Encrypted JSON configuration loading for secure environment management.
+- **Logging:** Structured logging (`Logrecord`) with TTY colors, TTS notifications, and daily file rotation.
+- **API Client:** Ergonomic HTTP client (`ky_http`) with built-in retries and structured `ApiResponse` handling.
 
 ## Tech Stack
 - **Runtime:** `tokio` (Async I/O)
+- **Serialization:** `serde`, `prost` (Protobuf)
+- **Networking:** `tokio-tungstenite` (WSS), `reqwest` (HTTP)
 - **Database:** `tokio-postgres`, `redis`
 - **TLS:** `rustls`, `tokio-postgres-rustls`
-- **Logging:** `fern`, `log`
-- **HTTP Client:** `reqwest`, `reqwest-middleware`, `reqwest-retry`
 - **Audio:** `rodio`
-- **WebSockets:** `tokio-tungstenite`, `axum`
-- **Protobuf:** `prost`

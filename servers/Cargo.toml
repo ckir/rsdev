@@ -40,7 +40,7 @@ tracing-appender = { workspace = true }
 tracing-subscriber = { workspace = true }
 url = { workspace = true }
 http = { workspace = true }
-
+tower-http = { workspace = true }
 
 [build-dependencies]
 
@@ -55,6 +55,10 @@ path = "src/server_log.rs"
 # [[bin]]
 # name = "redis2ws"
 # path = "src/redis2ws.rs"
+
+[[bin]]
+name = "restream"
+path = "src/restream.rs"
 
 [[bin]]
 name = "server_sql"

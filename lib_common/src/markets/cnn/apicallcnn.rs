@@ -1,4 +1,4 @@
-use crate::retrieve::ky_http::{ApiClient, ApiResponse};
+use crate::retrieve::ky_http::ApiClient;
 use crate::loggers::loggerlocal::LoggerLocal;
 use reqwest::Method;
 use serde_json::Value;

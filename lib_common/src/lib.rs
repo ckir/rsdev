@@ -36,3 +36,9 @@ pub use markets::cnn::fearandgreed::*;
 //         assert_eq!(result, 4);
 //     }
 // }
+
+pub mod core;
+pub mod ingestors;
+
+// This allows lib_common::VERSION access
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
