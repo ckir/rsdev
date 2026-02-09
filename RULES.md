@@ -57,7 +57,3 @@
 
 ## Dependencies
 - Prefer pure-Rust implementations (`rustls`) over native bindings (`native-tls`) to ensure consistent behavior across platforms and avoid system dependency issues (like OpenSSL versions).
-
-## Documentation Standards
-- **Granular Comments (///):** As of [Δευτέρα 9 Φεβρουαρίου 2026], granular `///` documentation comments have been added to all public structs, their fields, and `Default` implementations within `common/logrecord.rs`. This provides detailed explanations for each item.
-- **Top-level Comments (//!):** All `.rs` files within the `lib_common` and `servers` crates have been reviewed, and top-level `//!` documentation comments have been added where missing, summarizing the overall purpose and functionality of each module.

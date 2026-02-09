@@ -1,29 +1,3 @@
-//! # SQL Execution HTTP Server
-//!
-//! A Rust HTTP server designed to execute SQL queries against a PostgreSQL database.
-//! This server provides a `/sql` endpoint where clients can POST SQL statements,
-//! which are then executed, and the results are returned as JSON.
-//!
-//! ## Key Features:
-//! - **PostgreSQL Integration**: Connects to a PostgreSQL database using `deadpool_postgres`
-//!   for efficient connection pooling and `tokio-postgres` for asynchronous query execution.
-//! - **HTTP API**: Exposes a `POST /sql` endpoint that accepts raw SQL query strings
-//!   in the request body.
-//! - **Flexible Query Execution**: Utilizes `client.simple_query()` to handle multiple
-//!   SQL statements, including DDL, DML, and simple `SELECT` queries, returning
-//!   results as a JSON array of `RowData` and `CommandComplete` messages.
-//! - **Robust Error Handling**: Implements a custom `AppError` enum and `IntoResponse`
-//!   implementation to provide detailed and appropriate HTTP status codes and JSON
-//!   error responses for various database, pool, configuration, and request body issues.
-//! - **Configurable**: Database URL and server port are configurable via command-line
-//!   arguments and environment variables using `clap`.
-//! - **Structured Logging**: Integrates `tracing` for comprehensive logging of server
-//!   operations, database interactions, and errors.
-//!
-//! This server acts as a powerful backend for applications requiring dynamic SQL
-//! execution capabilities, particularly suitable for microservices architectures
-//! or specialized data access layers.
-
 use axum::{
     Json, Router,
     body::Bytes,
@@ -42,10 +16,7 @@ use tracing::debug;
 use tracing::{error, info, warn};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-/// # Application Configuration
-///
-/// Configuration struct for the SQL execution server, parsed from command-line arguments
-/// and environment variables using `clap`.
+// Configuration struct using clap
 #[derive(Parser, Debug)]
 #[clap(
     author,
@@ -54,8 +25,6 @@ use tracing_subscriber::{EnvFilter, FmtSubscriber};
 )]
 #[clap(long_about = None)]
 struct AppConfig {
-    /// PostgreSQL connection URL (e.g., postgres://user:pass@host:port/dbname).
-    /// Can be provided via `--db-url` argument or `DATABASE_URL` environment variable.
     #[clap(
         long,
         env = "DATABASE_URL",
@@ -63,35 +32,22 @@ struct AppConfig {
     )]
     db_url: String,
 
-    /// HTTP server port. Can be provided via `--port` argument or `PORT` environment variable.
-    /// Defaults to 3000.
     #[clap(long, env = "PORT", default_value_t = 3000, help = "HTTP server port")]
     port: u16,
 }
 
-/// # Application Error
-///
-/// Custom error type for the SQL execution server, encompassing various
-/// types of errors that can occur during operation.
+// Custom error type for the application
 #[derive(Debug)]
 enum AppError {
-    /// Error originating from `tokio_postgres`, related to database interaction.
     DatabaseError(tokio_postgres::Error),
-    /// Error originating from `deadpool_postgres`, related to connection pool management.
     PoolError(deadpool_postgres::PoolError),
-    /// Configuration-related errors, typically indicating invalid or missing settings.
     ConfigError(String),
-    /// Error when the request body is not valid UTF-8.
     BodyUtf8Error(std::string::FromUtf8Error),
 }
 
 impl IntoResponse for AppError {
-    /// Converts an `AppError` into an `axum::response::Response`, providing
-    /// appropriate HTTP status codes and JSON error bodies to the client.
     fn into_response(self) -> Response {
         let (status, error_json) = match self {
-            /// Handles `DatabaseError`s, extracting PostgreSQL-specific codes and messages
-            /// to provide more granular error details and HTTP status codes.
             AppError::DatabaseError(e) => {
                 error!("Database error: {:?}", e);
                 if let Some(db_err) = e.as_db_error() {
@@ -139,7 +95,6 @@ impl IntoResponse for AppError {
                     )
                 }
             }
-            /// Handles `PoolError`s, indicating issues with acquiring a database connection from the pool.
             AppError::PoolError(e) => {
                 error!("Database pool error: {}", e);
                 (
@@ -151,7 +106,6 @@ impl IntoResponse for AppError {
                     }),
                 )
             }
-            /// Handles `ConfigError`s, typically for invalid application or database configurations.
             AppError::ConfigError(e_msg) => {
                 error!("Configuration error: {}", e_msg);
                 (
@@ -163,7 +117,6 @@ impl IntoResponse for AppError {
                     }),
                 )
             }
-            /// Handles `BodyUtf8Error`s, for when the request body is not valid UTF-8.
             AppError::BodyUtf8Error(e) => {
                 error!("Request body UTF-8 error: {}", e);
                 (
@@ -181,8 +134,6 @@ impl IntoResponse for AppError {
 }
 
 impl std::fmt::Display for AppError {
-    /// Implements the `Display` trait for `AppError`, providing a user-friendly
-    /// string representation of the error.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             AppError::DatabaseError(e) => write!(f, "Database error: {}", e),
@@ -194,8 +145,6 @@ impl std::fmt::Display for AppError {
 }
 
 impl std::error::Error for AppError {
-    /// Implements the `Error` trait for `AppError`, allowing it to be used
-    /// with `?` operator and providing a source for error chaining.
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             AppError::DatabaseError(e) => Some(e),
@@ -207,42 +156,25 @@ impl std::error::Error for AppError {
 }
 
 // Type alias for the database pool, wrapped in Arc for sharing
-/// Type alias for the database connection pool, wrapped in `Arc` for shared,
-/// thread-safe access across asynchronous tasks.
 type DbPool = Arc<Pool>;
 
 #[tokio::main]
-/// # Main Entry Point
-///
-/// Initializes and runs the SQL execution HTTP server.
-///
-/// This function performs the following steps:
-/// 1.  Initializes the `tracing` subscriber for structured logging.
-/// 2.  Parses application configuration from command-line arguments and environment variables.
-/// 3.  Configures and creates a `deadpool_postgres` connection pool to the PostgreSQL database.
-/// 4.  Builds the `axum` router, defining the `/sql` endpoint.
-/// 5.  Starts the HTTP server, listening for incoming requests.
-///
-/// # Returns
-/// An `anyhow::Result<()>` indicating success or failure of the server operation.
 async fn main() -> anyhow::Result<()> {
-    /// Initializes the `tracing` subscriber to process and format logs.
-    /// It uses `EnvFilter` to set log levels based on the `RUST_LOG` environment variable.
+    // Initialize tracing subscriber for logging (reads RUST_LOG environment variable)
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(EnvFilter::from_default_env())
         .finish();
     tracing::subscriber::set_global_default(subscriber)
         .expect("Failed to set global default tracing subscriber");
 
-    /// Parses command-line arguments and environment variables into `AppConfig`.
+    // Parse command-line arguments and environment variables
     let app_config = AppConfig::parse();
     info!(
         "Configuration loaded: DB URL (hidden), Port: {}",
         app_config.port
     );
 
-    /// Creates a `deadpool_postgres` configuration, setting the database URL
-    /// and connection manager recycling method.
+    // Create database configuration for deadpool-postgres
     let mut pg_pool_config = DeadpoolConfig::new();
     pg_pool_config.url = Some(app_config.db_url.clone()); // The URL itself
     pg_pool_config.manager = Some(ManagerConfig {
@@ -251,51 +183,34 @@ async fn main() -> anyhow::Result<()> {
     // Other pool settings like max_size, timeouts can be configured here on pg_pool_config.pool if needed.
     // pg_pool_config.pool = Some(deadpool_postgres::PoolConfig::new(10)); // Example: max_size = 10
 
-    /// Creates the PostgreSQL connection pool using the defined configuration.
+    // Create database pool
     let pool = pg_pool_config
         .create_pool(Some(Runtime::Tokio1), NoTls)
         .map_err(|e| AppError::ConfigError(format!("Failed to create database pool: {}", e)))?;
     info!("Database connection pool created successfully.");
 
-    /// Builds the `axum` application router, registering the `execute_sql_handler` for the `/sql` path.
-    /// The database pool is shared across handlers using `with_state`.
+    // Build Axum application router
+    // The pool is wrapped in Arc automatically by with_state if not already
     let app = Router::new()
         .route("/sql", post(execute_sql_handler))
         .with_state(Arc::new(pool));
 
-    /// Defines the socket address for the HTTP server to listen on.
+    // Define server address
     let addr = SocketAddr::from(([0, 0, 0, 0], app_config.port));
     info!("Starting HTTP server on http://{}", addr);
 
-    /// Starts the `axum` server, binding to the specified address and serving the application.
+    // Run the Axum server
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
 }
 
-/// # Execute SQL Handler
-///
-/// An `axum` handler for the `POST /sql` endpoint.
-///
-/// This handler receives SQL statements as raw bytes in the request body,
-/// executes them against the PostgreSQL database using a connection from the pool,
-/// and returns the results as a JSON array.
-///
-/// # Arguments
-/// * `pool` - An `axum::extract::State` containing the shared `DbPool`.
-/// * `body` - `axum::body::Bytes` representing the raw request body, expected to be a UTF-8 SQL string.
-///
-/// # Returns
-/// A `Result` containing either an `impl IntoResponse` (HTTP 200 OK with JSON results)
-/// or an `AppError` on failure.
 async fn execute_sql_handler(
     State(pool): State<DbPool>,
     body: Bytes, // Use Bytes for robust body handling, expects UTF-8 SQL string
 ) -> Result<impl IntoResponse, AppError> {
-    /// Converts the request body bytes to a UTF-8 string, returning an `AppError` if decoding fails.
     let sql_body = String::from_utf8(body.to_vec()).map_err(AppError::BodyUtf8Error)?;
-    /// Trims whitespace from the SQL query string.
     let trimmed_sql = sql_body.trim();
 
     info!("Received SQL query (length: {} chars)", trimmed_sql.len());
@@ -306,7 +221,6 @@ async fn execute_sql_handler(
         debug!("Trimmed SQL query: {}", trimmed_sql);
     }
 
-    /// Checks for an empty SQL query after trimming and logs a warning if found.
     if trimmed_sql.is_empty() {
         warn!("Received empty SQL query string after trimming.");
         // tokio-postgres's simple_query will error on an empty string.
@@ -315,12 +229,17 @@ async fn execute_sql_handler(
         // return Err(AppError::ConfigError("Empty SQL query provided".to_string())); // Using ConfigError as a placeholder for generic bad request
     }
 
-    /// Acquires a client connection from the `deadpool_postgres` pool.
+    // Get a client from the pool. Deadpool handles retries and reconnections.
     let client = pool.get().await.map_err(AppError::PoolError)?;
     debug!("Acquired DB client from pool.");
 
-    /// Executes the SQL statements using `client.simple_query()`.
-    /// This method can handle multiple SQL statements and returns a vector of `SimpleQueryMessage`s.
+    // Execute the SQL statements using simple_query
+    // simple_query can handle multiple SQL statements separated by semicolons.
+    // It returns a Vec of messages, primarily Rows and CommandComplete.
+    // Note: For SELECT queries, simple_query returns rows as arrays of strings,
+    // without column names. If named columns are essential, a single SELECT statement
+    // should be executed with `client.query()` instead, which requires more complex handling
+    // if multiple, mixed-type statements are allowed in one request.
     let messages = client
         .simple_query(trimmed_sql)
         .await
@@ -330,13 +249,10 @@ async fn execute_sql_handler(
         messages.len()
     );
 
-    /// Collects the processed query results into a JSON array.
     let mut results_json: Vec<serde_json::Value> = Vec::new();
 
-    /// Iterates through the `SimpleQueryMessage`s, converting rows and command completions to JSON.
     for msg in messages {
         match msg {
-            /// Handles `SimpleQueryMessage::Row`, converting row values into a JSON array of strings.
             SimpleQueryMessage::Row(row) => {
                 let mut json_row_values = Vec::new();
                 for i in 0..row.len() {
@@ -350,7 +266,6 @@ async fn execute_sql_handler(
                     "values": serde_json::Value::Array(json_row_values)
                 }));
             }
-            /// Handles `SimpleQueryMessage::CommandComplete`, adding the command tag to the JSON results.
             SimpleQueryMessage::CommandComplete(tag) => {
                 results_json.push(json!({
                     "type": "CommandComplete",
@@ -359,7 +274,6 @@ async fn execute_sql_handler(
             }
             // simple_query is documented to primarily return Row and CommandComplete.
             // Other protocol messages (like ReadyForQuery) are usually filtered by the high-level API.
-            /// Logs a warning for any unexpected `SimpleQueryMessage` variants.
             _ => {
                 // This case should ideally not be hit with simple_query's current implementation.
                 warn!(
