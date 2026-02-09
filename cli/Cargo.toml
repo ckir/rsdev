@@ -12,6 +12,8 @@ anyhow = { workspace = true }
 base64 = { workspace = true }
 # A crate that provides traits and functions for block padding.
 block-padding = { workspace = true }
+# A library for structured access to the output of `cargo metadata`.
+cargo_metadata = { workspace = true }
 # A crate for implementing Cipher Block Chaining (CBC) mode for block ciphers.
 cbc = { workspace = true }
 # A simple-to-use, efficient, and full-featured command-line argument parser.
@@ -60,6 +62,10 @@ path = "src/j5-to-yaml.rs"
 [[bin]]
 name = "js-paths"
 path = "src/js-paths.rs"
+
+[[bin]]
+name = "local-deps-tree"
+path = "src/local-deps-tree.rs"
 
 [[bin]]
 name = "rs_encrypt"

@@ -2,7 +2,7 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
-use lib_common::retrieve::ky_http::{ApiClient, ApiResponse};
+use lib_common::retrieve::ky_http::ApiClient;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct HttpbinResponse {

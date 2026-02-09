@@ -139,6 +139,8 @@ tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
 
 # --- System, Config & CLI ---
+# A library for structured access to the output of `cargo metadata`.
+cargo_metadata = "0.23.1"
 # A simple-to-use, efficient, and full-featured command-line argument parser.
 clap = { version = "4.5.29", features = ["derive", "env"] }
 # A tiny library for finding standard locations of configuration and data files.
