@@ -176,7 +176,7 @@ tempfile = "3.24.0"
 # A crate for recursively walking directory trees.
 walkdir = "2.5.0"
 # A library for reading and writing ZIP archives.
-zip = "7.3.0"
+zip = "8.0.0"
 
 # --- Audio ---
 # A cross-platform library that provides easy-to-use beep functions.

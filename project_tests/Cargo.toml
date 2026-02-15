@@ -23,9 +23,5 @@ name = "test_loggerlocal"
 path = "src/test_loggerlocal.rs"
 
 [[bin]]
-name = "test_yahoo_server_throughput"
-path = "src/test_yahoo_server_throughput.rs"
-
-[[bin]]
 name = "test_ky_http"
 path = "src/test_ky_http.rs"

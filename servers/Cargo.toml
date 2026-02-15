@@ -57,10 +57,6 @@ path = "src/server_log.rs"
 # path = "src/redis2ws.rs"
 
 [[bin]]
-name = "restream"
-path = "src/restream.rs"
-
-[[bin]]
 name = "server_sql"
 path = "src/server_sql.rs"
 
