@@ -48,6 +48,14 @@ walkdir = { workspace = true }
 zip = { workspace = true }
 
 [[bin]]
+name = "dir-to-json"
+path = "src/dir-to-json.rs"
+
+[[bin]]
+name = "dir-to-yaml"
+path = "src/dir-to-yaml.rs"
+
+[[bin]]
 name = "j5-format"
 path = "src/j5-format.rs"
 
@@ -75,6 +83,4 @@ path = "src/rs_encrypt.rs"
 name = "zip"
 path = "src/zip.rs"
 
-[[bin]]
-name = "dir-to-yaml"
-path = "src/dir-to-yaml.rs"
+
