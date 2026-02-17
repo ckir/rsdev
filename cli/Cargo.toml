@@ -52,6 +52,10 @@ name = "dir-to-json"
 path = "src/dir-to-json.rs"
 
 [[bin]]
+name = "dir-to-text"
+path = "src/dir-to-text.rs"
+
+[[bin]]
 name = "dir-to-yaml"
 path = "src/dir-to-yaml.rs"
 
