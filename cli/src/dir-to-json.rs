@@ -1,17 +1,16 @@
 //! # dir-to-json
 //!
 //! A high-performance command-line utility that converts a directory tree into a
-//! structured JSON format. Supports exclusion patterns, .gitignore rules, and
-//! optional minified output.
+//! structured JSON format. Respects .gitignore and creates a file by default.
 
 use clap::{ArgAction, Parser, ValueHint};
 use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 use serde::Serialize;
 use std::collections::BTreeMap;
+use std::fs;
 use std::path::{Path, PathBuf};
 
-/// Represents a directory node in the JSON tree.
 #[derive(Serialize, Default)]
 pub struct DirectoryNode {
     #[serde(flatten)]
@@ -21,15 +20,12 @@ pub struct DirectoryNode {
     pub files: Option<Vec<String>>,
 }
 
-/// CLI arguments for dir-to-json.
 #[derive(Parser)]
 #[clap(
     name = "dir-to-json",
-    version = "1.0.0",
+    version = "1.3.0",
     author = "ckir",
-    about = "Exports a directory structure to JSON.",
-    long_about = "Recursively scans a directory and generates a JSON representation of its hierarchy. \
-                  Supports exclusion patterns, .gitignore rules, and optional minified output."
+    about = "Exports a directory structure to JSON file."
 )]
 pub struct Cli {
     /// Root directory to scan.
@@ -51,13 +47,36 @@ pub struct Cli {
     /// Output minified JSON instead of pretty-printed.
     #[clap(long, action = ArgAction::SetTrue)]
     pub minify: bool,
+
+    /// Custom output path. Defaults to [folder-name].json
+    #[clap(long, short = 'o', value_hint = ValueHint::FilePath)]
+    pub output: Option<PathBuf>,
 }
 
 fn main() {
     let args = Cli::parse();
 
-    match dir_to_json(&args.path, args.no_files, args.use_gitignore, &args.exclude, args.minify) {
-        Ok(json) => println!("{}", json),
+    // Determine the root name for the file and the JSON object
+    let canonical_path = args.path.canonicalize().unwrap_or_else(|_| args.path.clone());
+    let root_name = canonical_path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "root".to_string());
+
+    // Logic for default filename if --output is not provided
+    let output_file = args.output.clone().unwrap_or_else(|| {
+        PathBuf::from(format!("{}.json", root_name))
+    });
+
+    match dir_to_json(&args.path, &root_name, args.no_files, args.use_gitignore, &args.exclude, args.minify) {
+        Ok(json) => {
+            if let Err(e) = fs::write(&output_file, json) {
+                eprintln!("Error: Failed to write to file {:?}.", output_file);
+                eprintln!("Details: {}", e);
+                std::process::exit(1);
+            }
+            println!("Successfully saved JSON to {:?}", output_file);
+        }
         Err(e) => {
             eprintln!("Error: Failed to process directory.");
             eprintln!("Details: {}", e);
@@ -66,9 +85,9 @@ fn main() {
     }
 }
 
-/// Core logic for directory → JSON conversion.
 pub fn dir_to_json(
     path: &Path,
+    root_name: &str,
     no_files: bool,
     use_gitignore: bool,
     excludes: &[String],
@@ -76,7 +95,6 @@ pub fn dir_to_json(
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut root_tree = DirectoryNode::default();
 
-    // Build exclusion overrides
     let mut override_builder = OverrideBuilder::new(path);
     for pattern in excludes {
         let neg_pattern = if pattern.starts_with('!') {
@@ -88,12 +106,19 @@ pub fn dir_to_json(
     }
     let overrides = override_builder.build()?;
 
-    // Configure directory walker
-    let walker = WalkBuilder::new(path)
-        .git_ignore(use_gitignore)
-        .overrides(overrides)
-        .hidden(false)
-        .build();
+    let mut builder = WalkBuilder::new(path);
+    builder.overrides(overrides).hidden(false);
+
+    if use_gitignore {
+        builder
+            .git_ignore(true)
+            .git_global(true)
+            .git_exclude(true)
+            .require_git(false) 
+            .add_custom_ignore_filename(".gitignore"); 
+    }
+
+    let walker = builder.build();
 
     for result in walker.skip(1) {
         let entry = match result {
@@ -108,7 +133,6 @@ pub fn dir_to_json(
         let relative_path = entry_path.strip_prefix(path).unwrap();
 
         let mut current_node = &mut root_tree;
-
         if let Some(parent) = relative_path.parent() {
             for component in parent.components() {
                 let component_str = component.as_os_str().to_str().unwrap().to_string();
@@ -129,21 +153,13 @@ pub fn dir_to_json(
         }
     }
 
-    // Wrap in root object
-    let mut root = BTreeMap::new();
-    let root_name = path
-        .canonicalize()
-        .ok()
-        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
-        .unwrap_or_else(|| "root".to_string());
+    let mut wrap = BTreeMap::new();
+    wrap.insert(root_name.to_string(), root_tree);
 
-    root.insert(root_name, root_tree);
-
-    // Serialize JSON
     let json = if minify {
-        serde_json::to_string(&root)?
+        serde_json::to_string(&wrap)?
     } else {
-        serde_json::to_string_pretty(&root)?
+        serde_json::to_string_pretty(&wrap)?
     };
 
     Ok(json)
