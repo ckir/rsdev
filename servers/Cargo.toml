@@ -20,7 +20,7 @@ env_logger = { workspace = true }
 fern = { workspace = true }
 futures-channel = { workspace = true }
 futures-util = { workspace = true }
-lib_common = { workspace = true }
+lib_common = { workspace = true, features = ["loggers", "utils", "configs"] }
 log = { workspace = true }
 prost = { workspace = true }
 redis = { workspace = true }
@@ -44,21 +44,21 @@ tower-http = { workspace = true }
 
 [build-dependencies]
 
-[[bin]]
-name = "server_speak"
-path = "src/server_speak.rs"
+# [[bin]]
+# name = "server_speak"
+# path = "src/server_speak.rs"
 
-[[bin]]
-name = "server_log"
-path = "src/server_log.rs"
+# [[bin]]
+# name = "server_log"
+# path = "src/server_log.rs"
 
 # [[bin]]
 # name = "redis2ws"
 # path = "src/redis2ws.rs"
 
-[[bin]]
-name = "server_sql"
-path = "src/server_sql.rs"
+# [[bin]]
+# name = "server_sql"
+# path = "src/server_sql.rs"
 
 [[bin]]
 name = "server_dummy"

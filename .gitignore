@@ -32,3 +32,4 @@ venv/
 .venv/
 
 config.json
+rsdev.txt

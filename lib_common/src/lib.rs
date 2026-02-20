@@ -1,45 +1,56 @@
+//! # lib_common
+//!
+//! The central utility library for the rsdev workspace.
+//! This library uses a modular, folder-based structure gated by features.
+
+// // Warn if dependencies are included but not used by any active features
 #![warn(unused_crate_dependencies)]
-// #![feature(exit_status_error)]
 
-// Re-export the `beep` function from the `actually_beep` crate
-pub use actually_beep::beep_with_hz_and_millis;
+// // --- Explicitly Link Crate Dependencies to Satisfy Lints ---
+// // These statements ensure the compiler recognizes the crates are intentionally 
+// // included when their corresponding features are enabled.
 
-// Declare the modules to re-export
-pub mod config_cloud;
-pub mod config_sys;
-pub mod loggers; // New parent module for logrecord and loggerlocal
-pub mod utils;   // New parent module for sys_info and utils
-pub mod retrieve; // New parent module for ky_http
-pub mod markets;  // New parent module for nasdaq::apicall
+#[cfg(feature = "loggers")]
+use fern as _;
+#[cfg(feature = "configs")]
+use json5 as _;
+#[cfg(feature = "loggers")]
+use log as _;
+#[cfg(feature = "utils")]
+use sha2 as _;
+#[cfg(feature = "connections")]
+use tokio_postgres as _;
+#[cfg(feature = "retrieve")]
+use tokio_tungstenite as _;
+#[cfg(feature = "loggers")]
+use tracing as _;
+#[cfg(feature = "retrieve")]
+use url as _;
+#[cfg(feature = "utils")]
+use uuid as _;
 
-// Re-export everything
-pub use config_cloud::*;
-pub use config_sys::*;
-pub use loggers::logrecord::*;
-pub use loggers::loggerlocal::*;
-pub use utils::misc::sys_info::*;
-pub use utils::misc::utils::*;
-pub use retrieve::ky_http::*;
-pub use markets::nasdaq::apicall::*;
-pub use markets::cnn::fearandgreed::*;
+// // --- Modular Exports ---
 
-// pub fn add(left: u64, right: u64) -> u64 {
-//     left + right
-// }
+/// Configuration loading and parsing modules (Cloud and System).
+#[cfg(feature = "configs")]
+pub mod configs;
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+/// Database and Cache connection management modules (Postgres, Redis).
+#[cfg(feature = "connections")]
+pub mod connections;
 
-//     #[test]
-//     fn it_works() {
-//         let result = add(2, 2);
-//         assert_eq!(result, 4);
-//     }
-// }
+/// Logging and tracing initialization modules.
+#[cfg(feature = "loggers")]
+pub mod loggers;
 
-pub mod core;
-pub mod ingestors;
+/// Market-specific API implementations (Nasdaq, CNN).
+#[cfg(feature = "markets")]
+pub mod markets;
 
-// This allows lib_common::VERSION access
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+/// Generic HTTP retrieval utilities.
+#[cfg(feature = "retrieve")]
+pub mod retrieve;
+
+/// Miscellaneous system utilities and helper functions.
+#[cfg(feature = "utils")]
+pub mod utils;

@@ -1,83 +1,103 @@
 [package]
 name = "lib_common"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+authors = ["ckir"]
+description = "A modular utility library with folder-based feature gating."
+
+[features]
+# // Default to no features to keep builds lean.
+default = []
+
+# // Meta-feature to enable all modules.
+full = ["configs", "connections", "loggers", "markets", "retrieve", "utils"]
+
+# // Feature: configs
+# // Enables cloud configuration retrieval, AES-256 decryption, and JSON parsing.
+# // Includes "dep:reqwest" to support blocking HTTP calls in config_cloud.rs.
+configs     = [
+    "dep:serde", 
+    "dep:serde_json", 
+    "dep:json5", 
+    "dep:more-config", 
+    "dep:aes", 
+    "dep:base64", 
+    "dep:cbc", 
+    "dep:cipher", 
+    "dep:static_init", 
+    "dep:thiserror", 
+    "dep:hex",
+    "dep:reqwest"
+]
+
+# // Feature: connections
+# // Enables database and cache drivers.
+connections = ["dep:sqlx", "dep:tokio-postgres", "dep:redis", "dep:tokio"]
+
+# // Feature: loggers
+# // Enables structured logging and file rotation.
+# // Includes "dep:tokio" to support Mutex and blocking tasks in loggerlocal.rs.
+loggers     = [
+    "dep:tracing", 
+    "dep:log", 
+    "dep:fern", 
+    "dep:colored", 
+    "dep:glob", 
+    "dep:postgres-types", 
+    "dep:serde_derive",
+    "dep:tokio"
+]
+
+# // Feature: markets
+# // Utilities for financial market data.
+markets     = ["dep:serde", "dep:chrono", "dep:chrono-tz"]
+
+# // Feature: retrieve
+# // Enables HTTP client capabilities with retries.
+retrieve    = ["dep:reqwest", "dep:reqwest-middleware", "dep:reqwest-retry", "dep:tokio-tungstenite", "dep:url", "dep:anyhow"]
+
+# // Feature: utils
+# // General helper functions for time, UUIDs, and hashing.
+utils       = ["dep:chrono", "dep:uuid", "dep:anyhow", "dep:sha2", "dep:hostname", "dep:local-ip-address", "dep:thiserror"]
 
 [dependencies]
-# --- ReStream Core & Async Utilities ---
-# An event-driven, non-blocking I/O platform for writing asynchronous I/O-backed applications.
-tokio = { workspace = true }
-# Common utilities and extension traits for the futures-rs library (required for StreamExt/SinkExt).
-futures-util = { workspace = true }
-# A utility for token-based cancellation of asynchronous tasks.
-tokio-util = { workspace = true }
-# Tokio binding for Tungstenite, the lightweight stream-based WebSocket implementation.
-tokio-tungstenite = { workspace = true }
+# // SQLX configuration with required features for postgres.
+sqlx = { workspace = true, optional = true, features = ["postgres", "runtime-tokio-rustls"] }
 
-# --- Networking & API ---
-# An HTTP client library for Rust.
-reqwest = { workspace = true }
-# Composable HTTP client middleware for reqwest.
-reqwest-middleware = { workspace = true }
-# Retry middleware for reqwest.
-reqwest-retry = { workspace = true }
-# A URL parsing library.
-url = { workspace = true }
+# // Core dependencies set as optional for feature gating.
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+json5 = { workspace = true, optional = true }
+more-config = { workspace = true, optional = true }
+aes = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
+cbc = { workspace = true, optional = true }
+cipher = { workspace = true, optional = true }
+hex = { workspace = true, optional = true }
+tokio-postgres = { workspace = true, optional = true }
+redis = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+tracing = { workspace = true, optional = true }
+log = { workspace = true, optional = true }
+fern = { workspace = true, optional = true }
+colored = { workspace = true, optional = true }
+glob = { workspace = true, optional = true }
+postgres-types = { workspace = true, optional = true }
+serde_derive = { workspace = true, optional = true }
 
-# --- Serialization & Data Formats ---
-# A generic serialization/deserialization framework.
-serde = { workspace = true }
-# Macros 1.1 implementation of #[derive(Serialize, Deserialize)].
-serde_derive = { workspace = true }
-# A JSON serialization file format.
-serde_json = { workspace = true }
-# Conversions between Rust and Postgres values.
-postgres-types = { workspace = true }
+# // reqwest is used by both 'configs' and 'retrieve' features.
+reqwest = { workspace = true, optional = true }
+reqwest-middleware = { workspace = true, optional = true }
+reqwest-retry = { workspace = true, optional = true }
 
-# --- Database & Storage ---
-# A native, asynchronous PostgreSQL client.
-tokio-postgres = { workspace = true }
-
-# --- Logging & Error Handling ---
-# A lightweight logging facade for Rust.
-log = { workspace = true }
-# Flexible concrete Error type built on std::error::Error.
-anyhow = { workspace = true }
-# This library provides a convenient derive macro for the standard library’s std::error::Error trait.
-thiserror = { workspace = true }
-
-# --- Cryptography & Security ---
-# A crate for implementing AES block ciphers.
-aes = { workspace = true }
-# A library for encoding and decoding data in Base64.
-base64 = { workspace = true }
-# A crate for implementing Cipher Block Chaining (CBC) mode for block ciphers.
-cbc = { workspace = true }
-# A crate that provides traits for cryptographic ciphers.
-cipher = { workspace = true }
-# A library for encoding and decoding data in hexadecimal format.
-hex = { workspace = true }
-# A crate that provides the SHA-2 family of hash functions.
-sha2 = { workspace = true }
-
-# --- System & Utilities ---
-# A library for working with dates and times.
-chrono = { workspace = true }
-# TimeZone implementations for chrono from the IANA database.
-chrono-tz = { workspace = true }
-# For coloring terminal output.
-colored = { workspace = true }
-# For finding files matching patterns.
-glob = { workspace = true }
-# A library for getting the hostname of the current system.
-hostname = { workspace = true }
-# A library for getting the local IP address of the current system.
-local-ip-address = { workspace = true }
-# A crate that provides support for configuration.
-more-config = { workspace = true }
-# Safe mutable static and non-const static initialization, and code execution at program startup/exit.
-static_init = { workspace = true }
-
-# --- Audio & Feedback ---
-# A cross-platform library that provides easy-to-use beep functions.
-actually_beep = { workspace = true }
+url = { workspace = true, optional = true }
+chrono = { workspace = true, optional = true }
+chrono-tz = { workspace = true, optional = true }
+uuid = { workspace = true, optional = true }
+anyhow = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }
+static_init = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+hostname = { workspace = true, optional = true }
+local-ip-address = { workspace = true, optional = true }
+tokio-tungstenite = { workspace = true, optional = true }

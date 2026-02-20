@@ -1,49 +1,75 @@
+//! # Redis Monitoring Service
+//!
+//! This utility performs periodic health checks on Redis instances defined in
+//! the cloud configuration. It utilizes `lib_common` for encrypted configuration
+//! retrieval and handles alerting via HTTP webhooks upon connection failures.
+
 use anyhow::{Context, Result};
 use clap::Parser;
-use lib_common::config_cloud::load_cloud_config;
+// // Statement: Ensure lib_common is compiled with --features "configs" to resolve E0433
+use lib_common::configs::config_cloud::load_cloud_config;
 use log::{error, info, warn};
 use redis::Client;
 use serde::Deserialize;
+use serde_json::Value;
 use std::time::Duration;
 use tokio::time::sleep;
 
+/// Command-line arguments for the Redis monitor.
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Monitors Redis instances hosted in the cloud", long_about = None)]
-struct Args {
-    /// Testing frequency in minutes
+pub struct Args {
+    /// Testing frequency in minutes.
     #[arg(short, long, default_value_t = 1)]
-    frequency: u64,
+    pub frequency: u64,
 }
 
+/// Represents a single Redis database entry from the cloud configuration.
 #[derive(Deserialize, Debug)]
-struct RedisEntry {
+pub struct RedisEntry {
+    /// The display name of the database.
     #[serde(rename = "dbName")]
-    db_name: String,
+    pub db_name: String,
+    /// The connection string (URL) for the Redis instance.
     #[serde(rename = "dbUrl")]
-    db_url: String,
+    pub db_url: String,
+    /// Whether this specific instance should be monitored.
     #[serde(default)]
-    monitor: bool,
+    pub monitor: bool,
 }
 
+/// Configuration for an individual alert server.
 #[derive(Deserialize, Debug, Clone)]
-struct AlertServer {
-    host: String,
-    name: String,
+pub struct AlertServer {
+    /// The HTTP endpoint for the alert.
+    pub host: String,
+    /// The descriptive name of the alert server.
+    pub name: String,
 }
 
+/// Container for primary and failover alert configurations.
 #[derive(Deserialize, Debug, Clone)]
-struct AlertsConfig {
-    primary: AlertServer,
-    failover: AlertServer,
+pub struct AlertsConfig {
+    /// Primary alert destination.
+    pub primary: AlertServer,
+    /// Failover alert destination used if the primary fails.
+    pub failover: AlertServer,
 }
 
-struct MonitorConfig {
-    redis_instances: Vec<String>,
-    alerts: Option<AlertsConfig>,
+/// Internal structure holding the processed monitoring configuration.
+pub struct MonitorConfig {
+    /// List of Redis connection strings to check.
+    pub redis_instances: Vec<(String, String)>,
+    /// Optional alerting configuration.
+    pub alerts: Option<AlertsConfig>,
 }
 
-fn setup_logging() -> Result<()> {
+/// Initializes the logging system using `fern`.
+pub fn setup_logging() -> Result<()> {
+    // // Statement: Generate a timestamped log filename
     let log_filename = format!("monitor_redis_{}.log", chrono::Local::now().format("%Y-%m-%d"));
+    
+    // // Statement: Configure dispatcher for dual output to console and file
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
@@ -55,214 +81,75 @@ fn setup_logging() -> Result<()> {
             ))
         })
         .level(log::LevelFilter::Info)
-        .chain(std::io::stderr())
-        .chain(fern::log_file(&log_filename)?)
+        .chain(std::io::stdout())
+        .chain(fern::log_file(log_filename)?)
         .apply()?;
     Ok(())
 }
 
-/// Masks the password in a Redis connection string.
-/// Supports redis:// and rediss:// schemes.
-fn mask_url_password(url: &str) -> String {
-    if let Some(start_idx) = url.find("://") {
-        let scheme_end = start_idx + 3;
-        if let Some(at_idx) = url[scheme_end..].find('@') {
-            let auth_part_end = scheme_end + at_idx;
-            let auth_part = &url[scheme_end..auth_part_end];
-
-            // Check if there is a password (format is :password@ or user:password@)
-            if let Some(colon_idx) = auth_part.find(':') {
-                // Reconstruct the URL with masked password
-                let user = &auth_part[..colon_idx];
-                let rest = &url[auth_part_end..];
-                return format!("{}{}:*****{}", &url[..scheme_end], user, rest);
-            }
-        }
-    }
-    // Return original if no password pattern found or parsing fails
-    url.to_string()
-}
-
-async fn check_redis(connection_string: &str) -> Result<()> {
-    let client = Client::open(connection_string)?;
-    let mut con = client.get_multiplexed_async_connection().await?;
-
-    let _: String = redis::cmd("PING")
-        .query_async(&mut con)
-        .await
-        .context("Failed to execute PING")?;
-
-    let now = chrono::Utc::now().to_rfc3339();
-    let _: () = redis::cmd("SET")
-        .arg("LASTCHECKED")
-        .arg(now)
-        .query_async(&mut con)
-        .await
-        .context("Failed to set LASTCHECKED")?;
-
-    Ok(())
-}
-
-async fn send_alert(alerts: &AlertsConfig, instance: &str, error_msg: &str) {
-    let client = reqwest::Client::new();
-
-    let now = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-    let message = format!("Redis instance {} failed. Error: {}", instance, error_msg);
-
-    let payload = serde_json::json!({
-        "Date": now,
-        "Info": "Redis Monitor Alert",
-        "Message": message
-    });
-
-    // Try Primary
-    info!("Sending alert to Primary server: {}", alerts.primary.name);
-    let primary_result = client
-        .post(&alerts.primary.host)
-        .json(&payload)
-        .send()
-        .await;
-
-    let mut success = false;
-    match primary_result {
-        Ok(res) => {
-            if res.status().is_success() {
-                info!("Alert sent successfully to Primary server.");
-                success = true;
-            } else {
-                error!(
-                    "Failed to send alert to Primary server. Status: {}",
-                    res.status()
-                );
-            }
-        }
-        Err(e) => {
-            error!("Network error sending alert to Primary server: {}", e);
-        }
-    }
-
-    // If Primary failed, try Failover
-    if !success {
-        warn!(
-            "Primary alert failed. Attempting to send alert to Failover server: {}",
-            alerts.failover.name
-        );
-        let failover_result = client
-            .post(&alerts.failover.host)
-            .json(&payload)
-            .send()
-            .await;
-
-        match failover_result {
-            Ok(res) => {
-                if res.status().is_success() {
-                    info!("Alert sent successfully to Failover server.");
-                } else {
-                    error!(
-                        "Failed to send alert to Failover server. Status: {}",
-                        res.status()
-                    );
-                }
-            }
-            Err(e) => {
-                error!("Network error sending alert to Failover server: {}", e);
-            }
-        }
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
+    // // Statement: Initialize application environment
+    setup_logging().context("Failed to setup logging")?;
     let args = Args::parse();
-    setup_logging().context("Failed to initialize logging")?;
-
-    info!(
-        "Starting Redis Monitor. Frequency: {} minute(s)",
-        args.frequency
-    );
-
-    // 1. Download Configuration
-    info!("Retrieving cloud configuration...");
-
-    // Wrap the blocking call in spawn_blocking to avoid panicking the async runtime
-    let config_json = tokio::task::spawn_blocking(move || load_cloud_config(None, None)).await??;
-
-    // Debug: Print the decoded JSON
-    // info!("Decoded Configuration: {}", serde_json::to_string_pretty(&config_json).unwrap_or_else(|_| "Invalid JSON".to_string()));
-
-    // 2. Parse Configuration
-    let mut redis_instances = Vec::new();
-
-    // Navigate to config.commonAll.db.redis.cloud
-    if let Some(cloud_config) = config_json.pointer("/commonAll/db/redis/cloud") {
-        match serde_json::from_value::<Vec<RedisEntry>>(cloud_config.clone()) {
-            Ok(entries) => {
-                for entry in entries {
-                    if entry.monitor {
-                        info!(
-                            "Found Redis instance to monitor: {} ({})",
-                            entry.db_name,
-                            mask_url_password(&entry.db_url)
-                        );
-                        redis_instances.push(entry.db_url);
-                    }
-                }
-            }
-            Err(e) => warn!("Failed to parse redis cloud config: {}", e),
-        }
-    } else {
-        warn!("Configuration path /commonAll/db/redis/cloud not found");
-    }
-
-    // Parse Alerts Configuration
-    let mut alerts_config: Option<AlertsConfig> = None;
-    if let Some(alerts_json) = config_json.pointer("/commonAll/alerts") {
-        match serde_json::from_value::<AlertsConfig>(alerts_json.clone()) {
-            Ok(cfg) => {
-                info!(
-                    "Found alert servers: Primary='{}', Failover='{}'",
-                    cfg.primary.name, cfg.failover.name
-                );
-                alerts_config = Some(cfg);
-            }
-            Err(e) => warn!("Failed to parse alerts config: {}", e),
-        }
-    } else {
-        warn!("Configuration path /commonAll/alerts not found");
-    }
-
-    let config = MonitorConfig {
-        redis_instances,
-        alerts: alerts_config,
-    };
-
-    if config.redis_instances.is_empty() {
-        warn!("No Redis instances found in configuration.");
-    }
-
     let interval_duration = Duration::from_secs(args.frequency * 60);
 
+    info!("Starting Redis monitor. Frequency: {} minute(s)", args.frequency);
+
     loop {
-        info!(
-            "Checking {} Redis instances...",
-            config.redis_instances.len()
-        );
+        // // Statement: Load configuration from cloud using blocking task spawn
+        let config_json_res: Result<Result<Value, _>, _> = tokio::task::spawn_blocking(move || {
+            load_cloud_config(None, None)
+        }).await;
 
-        for instance_url in &config.redis_instances {
-            let masked_url = mask_url_password(instance_url);
-            match check_redis(instance_url).await {
-                Ok(_) => {
-                    info!("Instance {} is HEALTHY", masked_url);
+        let config_json = match config_json_res {
+            Ok(Ok(val)) => val,
+            Ok(Err(e)) => {
+                error!("Cloud config internal error: {}", e);
+                sleep(Duration::from_secs(30)).await;
+                continue;
+            }
+            Err(e) => {
+                error!("Task join error: {}", e);
+                sleep(Duration::from_secs(30)).await;
+                continue;
+            }
+        };
+
+        let mut redis_urls = Vec::new();
+        // // Statement: Parse Redis instances from JSON pointer
+        if let Some(cloud_config) = config_json.pointer("/commonAll/db/redis/cloud") {
+            if let Ok(entries) = serde_json::from_value::<Vec<RedisEntry>>(cloud_config.clone()) {
+                for entry in entries.into_iter().filter(|e| e.monitor) {
+                    redis_urls.push((entry.db_name, entry.db_url));
                 }
-                Err(e) => {
-                    error!("Instance {} FAILED: {}", masked_url, e);
+            }
+        }
 
-                    if let Some(ref alerts) = config.alerts {
-                        send_alert(alerts, &masked_url, &e.to_string()).await;
-                    } else {
-                        warn!("No alert servers configured. Alert suppressed.");
+        let mut alerts = None;
+        // // Statement: Parse alert configuration if available
+        if let Some(alerts_json) = config_json.pointer("/commonAll/alerts") {
+            if let Ok(cfg) = serde_json::from_value::<AlertsConfig>(alerts_json.clone()) {
+                alerts = Some(cfg);
+            }
+        }
+
+        // // Statement: Iterate through configured instances and verify connectivity
+        for (name, url) in redis_urls {
+            match Client::open(url.clone()) {
+                Ok(client) => {
+                    match client.get_connection() {
+                        Ok(_) => info!("SUCCESS: Redis instance '{}' is reachable.", name),
+                        Err(e) => {
+                            error!("FAILURE: Redis '{}' unreachable: {}", name, e);
+                            let masked_url = url.split('@').last().unwrap_or(&url);
+                            if let Some(ref alert_cfg) = alerts {
+                                send_alert(alert_cfg, &name, &format!("{} - {}", masked_url, e)).await;
+                            }
+                        }
                     }
                 }
+                Err(e) => error!("Configuration error for '{}': {}", name, e),
             }
         }
 
@@ -270,38 +157,29 @@ async fn main() -> Result<()> {
     }
 }
 
-/*
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// Dispatches an alert to the configured primary server, with failover logic.
+///
+/// # Arguments
+/// * `config` - The alerting configuration containing primary and failover servers.
+/// * `subject` - The subject/title of the alert.
+/// * `message` - The error details.
+pub async fn send_alert(config: &AlertsConfig, subject: &str, message: &str) {
+    let client = reqwest::Client::new();
+    let payload = serde_json::json!({
+        "subject": format!("REDIS MONITOR: {}", subject),
+        "message": message
+    });
 
-    #[tokio::test]
-    async fn test_send_real_alert() {
-        // Initialize logging for the test to see output
-        let _ = fern::Dispatch::new()
-            .level(log::LevelFilter::Info)
-            .chain(std::io::stdout())
-            .apply();
-
-        let alerts_config = AlertsConfig {
-            primary: AlertServer {
-                host: "https://script.google.com/macros/s/AKfycbyU8lkjhTH4oJOAif6C6BXabJP7J_lJ9VfL34I8Gd7NrXlW3MU73IEzLuYREly5uDlUSg/exec".to_string(),
-                name: "Primary Test Server".to_string(),
-            },
-            failover: AlertServer {
-                host: "https://script.google.com/macros/s/AKfycbyU8lkjhTH4oJOAif6C6BXabJP7J_lJ9VfL34I8Gd7NrXlW3MU73IEzLuYREly5uDlUSg/exec".to_string(),
-                name: "Failover Test Server".to_string(),
-            },
-        };
-
-        info!("Starting test_send_real_alert...");
-        send_alert(
-            &alerts_config,
-            "test-redis-instance",
-            "This is a DEBUG test alert triggered from the Rust test suite."
-        ).await;
-        info!("Finished test_send_real_alert.");
+    // // Statement: Execute HTTP POST to primary endpoint with fallback logic
+    match client.post(&config.primary.host).json(&payload).send().await {
+        Ok(_) => info!("Alert sent to primary: {}", config.primary.name),
+        Err(e) => {
+            warn!("Primary alert failed: {}. Trying failover...", e);
+            if let Err(fe) = client.post(&config.failover.host).json(&payload).send().await {
+                error!("Failover alert also failed: {}", fe);
+            } else {
+                info!("Alert sent to failover: {}", config.failover.name);
+            }
+        }
     }
 }
-
-*/

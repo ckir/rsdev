@@ -3,7 +3,7 @@
 //! A professional-grade utility to map recursive internal dependencies 
 //! from binary entry points down to specific library modules.
 
-use cargo_metadata::{MetadataCommand, Package, PackageId};
+use cargo_metadata::MetadataCommand;
 use clap::Parser;
 use std::collections::{BTreeSet, HashMap};
 use std::fs;

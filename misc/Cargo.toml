@@ -13,7 +13,7 @@ clap = { workspace = true }
 # A configurable logger for Rust.
 fern = { workspace = true }
 # A shared library for this project.
-lib_common = { workspace = true }
+lib_common = { workspace = true, features = ["configs"] }
 # A lightweight logging facade for Rust.
 log = { workspace = true }
 # A crate that provides an abstraction over native TLS implementations.

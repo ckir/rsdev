@@ -4,7 +4,7 @@ use ignore::WalkBuilder;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fs;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 #[derive(Serialize, Default)]
