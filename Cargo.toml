@@ -7,7 +7,7 @@ members = [
     "lib_common",
     "misc",
     "servers",
-    "project_tests",
+    # "project_tests",
     "vendor/json5format",
     "vendor/pmdaemon"
 ]

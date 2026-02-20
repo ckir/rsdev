@@ -76,7 +76,7 @@ jobs:
         env:
           PKG_CONFIG_PATH: ${{ matrix.pkg_config_path }}
           PKG_CONFIG_ALLOW_CROSS: 1
-        run: cargo build --release ${{ matrix.cargo_opts }}
+        run: cargo build --release --features full ${{ matrix.cargo_opts }}
 
       - name: Prepare Artifacts
         run: |
@@ -107,7 +107,7 @@ jobs:
 
       - name: Build
         shell: pwsh
-        run: cargo build --release
+        run: cargo build --release --features full
 
       - name: Prepare Artifacts
         shell: bash
