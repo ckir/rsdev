@@ -1,3 +1,4 @@
+#![warn(unused_crate_dependencies)]
 // #![feature(exit_status_error)]
 
 // Re-export the `beep` function from the `actually_beep` crate
