@@ -1,1 +1,1 @@
-// This module may contain datafeed-specific logic in the future.
+pub mod yahoostreaming;

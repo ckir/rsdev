@@ -3,19 +3,18 @@ name = "lib_common"
 version = "0.1.0"
 edition = "2021"
 authors = ["ckir"]
-description = "A modular utility library with folder-based feature gating."
+description = "A modular utility library with folder-based feature gating for ReStream and justfindata."
 
 [features]
-# // Default to no features to keep builds lean.
+# Default to no features to keep builds lean.
 default = []
 
-# // Meta-feature to enable all modules.
+# Meta-feature to enable all modules for development or high-dependency environments.
 full = ["configs", "connections", "loggers", "markets", "retrieve", "utils"]
 
-# // Feature: configs
-# // Enables cloud configuration retrieval, AES-256 decryption, and JSON parsing.
-# // Includes "dep:reqwest" to support blocking HTTP calls in config_cloud.rs.
-configs     = [
+# Feature: configs
+# Enables cloud configuration retrieval, AES-256 decryption, and JSON parsing.
+configs = [
     "dep:serde", 
     "dep:serde_json", 
     "dep:json5", 
@@ -30,14 +29,13 @@ configs     = [
     "dep:reqwest"
 ]
 
-# // Feature: connections
-# // Enables database and cache drivers.
+# Feature: connections
+# Enables database and cache drivers (Redis, Postgres).
 connections = ["dep:sqlx", "dep:tokio-postgres", "dep:redis", "dep:tokio"]
 
-# // Feature: loggers
-# // Enables structured logging and file rotation.
-# // Includes "dep:tokio" to support Mutex and blocking tasks in loggerlocal.rs.
-loggers     = [
+# Feature: loggers
+# Enables structured logging, file rotation, and console coloring.
+loggers = [
     "dep:tracing", 
     "dep:log", 
     "dep:fern", 
@@ -48,56 +46,90 @@ loggers     = [
     "dep:tokio"
 ]
 
-# // Feature: markets
-# // Utilities for financial market data.
-markets     = ["dep:serde", "dep:chrono", "dep:chrono-tz"]
+# Feature: markets
+# Utilities for financial market data, including Yahoo Finance Protobuf streaming.
+# Added dep:prost, dep:futures-util, and dep:tokio-tungstenite for yahoostreaming support.
+markets = [
+    "dep:serde", 
+    "dep:chrono", 
+    "dep:chrono-tz", 
+    "dep:prost", 
+    "dep:futures-util", 
+    "dep:tokio-tungstenite",
+    "dep:base64",
+    "dep:serde_json"
+]
 
-# // Feature: retrieve
-# // Enables HTTP client capabilities with retries.
-retrieve    = ["dep:reqwest", "dep:reqwest-middleware", "dep:reqwest-retry", "dep:tokio-tungstenite", "dep:url", "dep:anyhow"]
+# Feature: retrieve
+# Enables HTTP client capabilities with automated retries and WebSocket support.
+retrieve = [
+    "dep:reqwest", 
+    "dep:reqwest-middleware", 
+    "dep:reqwest-retry", 
+    "dep:tokio-tungstenite", 
+    "dep:url", 
+    "dep:anyhow"
+]
 
-# // Feature: utils
-# // General helper functions for time, UUIDs, and hashing.
-utils       = ["dep:chrono", "dep:uuid", "dep:anyhow", "dep:sha2", "dep:hostname", "dep:local-ip-address", "dep:thiserror"]
+# Feature: utils
+# General helper functions for time, UUIDs, hashing, and system info.
+utils = [
+    "dep:chrono", 
+    "dep:uuid", 
+    "dep:anyhow", 
+    "dep:sha2", 
+    "dep:hostname", 
+    "dep:local-ip-address", 
+    "dep:thiserror"
+]
 
 [dependencies]
-# // SQLX configuration with required features for postgres.
-sqlx = { workspace = true, optional = true, features = ["postgres", "runtime-tokio-rustls"] }
-
-# // Core dependencies set as optional for feature gating.
-serde = { workspace = true, optional = true }
+# --- Core Workspace Dependencies ---
+# These use 'workspace = true' to inherit versions from the root Cargo.toml.
+tokio = { workspace = true, optional = true, features = ["full"] }
+serde = { workspace = true, optional = true, features = ["derive"] }
 serde_json = { workspace = true, optional = true }
-json5 = { workspace = true, optional = true }
-more-config = { workspace = true, optional = true }
-aes = { workspace = true, optional = true }
+tracing = { workspace = true, optional = true }
+anyhow = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
-cbc = { workspace = true, optional = true }
-cipher = { workspace = true, optional = true }
-hex = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+
+# --- Database & Storage ---
+sqlx = { workspace = true, optional = true, features = ["postgres", "runtime-tokio-rustls"] }
 tokio-postgres = { workspace = true, optional = true }
 redis = { workspace = true, optional = true }
-tokio = { workspace = true, optional = true }
-tracing = { workspace = true, optional = true }
+postgres-types = { workspace = true, optional = true }
+
+# --- Networking & Protocols ---
+# Added 'sink' feature to futures-util for WebSocket .send() capabilities.
+tokio-tungstenite = { workspace = true, optional = true, features = ["native-tls"] }
+futures-util = { version = "0.3", optional = true, features = ["sink", "std"] }
+prost = { version = "0.13", optional = true }
+reqwest = { workspace = true, optional = true }
+reqwest-middleware = { workspace = true, optional = true }
+reqwest-retry = { workspace = true, optional = true }
+url = { workspace = true, optional = true }
+
+# --- Formatting & Utilities ---
+chrono = { workspace = true, optional = true }
+chrono-tz = { workspace = true, optional = true }
+uuid = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }
+hex = { workspace = true, optional = true }
+hostname = { workspace = true, optional = true }
+local-ip-address = { workspace = true, optional = true }
+json5 = { workspace = true, optional = true }
+more-config = { workspace = true, optional = true }
+static_init = { workspace = true, optional = true }
+
+# --- Crypto (for Configs) ---
+aes = { workspace = true, optional = true }
+cbc = { workspace = true, optional = true }
+cipher = { workspace = true, optional = true }
+
+# --- Logging & CLI ---
 log = { workspace = true, optional = true }
 fern = { workspace = true, optional = true }
 colored = { workspace = true, optional = true }
 glob = { workspace = true, optional = true }
-postgres-types = { workspace = true, optional = true }
 serde_derive = { workspace = true, optional = true }
-
-# // reqwest is used by both 'configs' and 'retrieve' features.
-reqwest = { workspace = true, optional = true }
-reqwest-middleware = { workspace = true, optional = true }
-reqwest-retry = { workspace = true, optional = true }
-
-url = { workspace = true, optional = true }
-chrono = { workspace = true, optional = true }
-chrono-tz = { workspace = true, optional = true }
-uuid = { workspace = true, optional = true }
-anyhow = { workspace = true, optional = true }
-sha2 = { workspace = true, optional = true }
-static_init = { workspace = true, optional = true }
-thiserror = { workspace = true, optional = true }
-hostname = { workspace = true, optional = true }
-local-ip-address = { workspace = true, optional = true }
-tokio-tungstenite = { workspace = true, optional = true }
