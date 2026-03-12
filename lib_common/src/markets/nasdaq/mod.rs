@@ -1,6 +1,6 @@
 //! # Nasdaq Market Data Modules
 //!
-//! Provides implementations for Nasdaq-specific market information, 
+//! Provides implementations for Nasdaq-specific market information,
 //! including operational status and API connectivity.
 
 /// API client for Nasdaq data sources.

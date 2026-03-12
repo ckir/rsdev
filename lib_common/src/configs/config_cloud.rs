@@ -5,9 +5,9 @@
 //! utilizes static initialization to cache the configuration in memory.
 
 use aes::Aes256;
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use cbc::Decryptor;
-use cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
+use cipher::{block_padding::Pkcs7, BlockDecryptMut, KeyIvInit};
 use reqwest::blocking::Client;
 use serde_json::Value;
 use static_init::dynamic;
@@ -43,7 +43,7 @@ pub enum CloudConfigError {
 }
 
 /// Global static storage for the cloud configuration.
-/// 
+///
 /// This is initialized exactly once upon first access or program start.
 #[dynamic]
 static CLOUD_CONFIG: Result<Value, CloudConfigError> = load_cloud_config(None, None);
@@ -76,7 +76,7 @@ pub fn load_cloud_config(
 
     // Initialize blocking HTTP client.
     let client = Client::new();
-    
+
     // Execute GET request; explicit type reqwest::Error added for stability.
     let response = client
         .get(&url)
@@ -160,7 +160,9 @@ pub fn decrypt_and_parse(content: &str, password: &str) -> Result<Value, CloudCo
     let decryptor = Decryptor::<Aes256>::new(&key_arr.into(), &iv_arr.into());
     let mut buf = ciphertext.to_vec();
     if buf.is_empty() {
-        return Err(CloudConfigError::DecryptionError("Ciphertext is empty".to_string()));
+        return Err(CloudConfigError::DecryptionError(
+            "Ciphertext is empty".to_string(),
+        ));
     }
 
     let decrypted_data = decryptor
@@ -205,7 +207,9 @@ mod tests {
         let mut buf = vec![0u8; data.len() + 16]; // Enough space for padding
         let len = data.len();
         buf[..len].copy_from_slice(data);
-        let ciphertext = encryptor.encrypt_padded_mut::<Pkcs7>(&mut buf, len).unwrap();
+        let ciphertext = encryptor
+            .encrypt_padded_mut::<Pkcs7>(&mut buf, len)
+            .unwrap();
         general_purpose::STANDARD.encode(ciphertext)
     }
 
@@ -229,7 +233,9 @@ mod tests {
         let content = "only_one_line";
         let result = decrypt_and_parse(content, "dummy_key");
         match result {
-            Err(CloudConfigError::InvalidData(msg)) => assert!(msg.contains("expected at least 2 lines")),
+            Err(CloudConfigError::InvalidData(msg)) => {
+                assert!(msg.contains("expected at least 2 lines"))
+            }
             _ => panic!("Expected InvalidData error"),
         }
     }
@@ -242,7 +248,9 @@ mod tests {
         let short_key = "001122"; // Valid hex, but only 3 bytes
         let result = decrypt_and_parse(&content, short_key);
         match result {
-            Err(CloudConfigError::DecryptionError(msg)) => assert!(msg.contains("Key must be 32 bytes")),
+            Err(CloudConfigError::DecryptionError(msg)) => {
+                assert!(msg.contains("Key must be 32 bytes"))
+            }
             _ => panic!("Expected DecryptionError error with 'Key must be 32 bytes'"),
         }
     }
@@ -255,7 +263,9 @@ mod tests {
 
         let result = load_cloud_config(None, None);
         match result {
-            Err(CloudConfigError::MissingEnvVar(var)) => assert!(var.contains("WEBLIB_AES_PASSWORD")),
+            Err(CloudConfigError::MissingEnvVar(var)) => {
+                assert!(var.contains("WEBLIB_AES_PASSWORD"))
+            }
             _ => panic!("Expected MissingEnvVar error"),
         }
     }

@@ -1,15 +1,15 @@
 //! # Market Status Live Data Test
 //!
-//! Connects to the Nasdaq API via lib_common to retrieve and display 
+//! Connects to the Nasdaq API via lib_common to retrieve and display
 //! the raw data structure.
 
-use lib_common::markets::nasdaq::marketstatus::MarketStatus;
-use lib_common::markets::nasdaq::apicall::ApiCall;
 use lib_common::loggers::loggerlocal::LoggerLocal;
+use lib_common::markets::nasdaq::apicall::ApiCall;
+use lib_common::markets::nasdaq::marketstatus::MarketStatus;
 use std::sync::Arc;
 
 /// Executes the live market status fetch.
-/// 
+///
 /// // Statement: Prints the full MarketStatusData struct to stdout on success.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             println!("-----------------------------------------------");
             println!("{}", serde_json::to_string_pretty(&data)?);
             println!("-----------------------------------------------");
-            
+
             // // Statement: Show calculated sleep duration for verification
             let sleep_dur = data.get_sleep_duration(Arc::clone(&logger)).await;
             println!("[INFO] Calculated sleep duration: {:?}", sleep_dur);

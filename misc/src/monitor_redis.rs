@@ -79,13 +79,15 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     let interval_duration = Duration::from_secs(args.frequency * 60);
 
-    info!("Starting Redis monitor. Frequency: {} minute(s)", args.frequency);
+    info!(
+        "Starting Redis monitor. Frequency: {} minute(s)",
+        args.frequency
+    );
 
     loop {
         // // Statement: Load configuration from cloud using blocking task spawn
-        let config_json_res: Result<Result<Value, _>, _> = tokio::task::spawn_blocking(move || {
-            load_cloud_config(None, None)
-        }).await;
+        let config_json_res: Result<Result<Value, _>, _> =
+            tokio::task::spawn_blocking(move || load_cloud_config(None, None)).await;
 
         let config_json = match config_json_res {
             Ok(Ok(val)) => val,
@@ -122,18 +124,16 @@ async fn main() -> Result<()> {
         // // Statement: Iterate through configured instances and verify connectivity
         for (name, url) in redis_urls {
             match Client::open(url.clone()) {
-                Ok(client) => {
-                    match client.get_connection() {
-                        Ok(_) => info!("SUCCESS: Redis instance '{}' is reachable.", name),
-                        Err(e) => {
-                            error!("FAILURE: Redis '{}' unreachable: {}", name, e);
-                            let masked_url = url.split('@').next_back().unwrap_or(&url);
-                            if let Some(ref alert_cfg) = alerts {
-                                send_alert(alert_cfg, &name, &format!("{} - {}", masked_url, e)).await;
-                            }
+                Ok(client) => match client.get_connection() {
+                    Ok(_) => info!("SUCCESS: Redis instance '{}' is reachable.", name),
+                    Err(e) => {
+                        error!("FAILURE: Redis '{}' unreachable: {}", name, e);
+                        let masked_url = url.split('@').next_back().unwrap_or(&url);
+                        if let Some(ref alert_cfg) = alerts {
+                            send_alert(alert_cfg, &name, &format!("{} - {}", masked_url, e)).await;
                         }
                     }
-                }
+                },
                 Err(e) => error!("Configuration error for '{}': {}", name, e),
             }
         }
@@ -156,11 +156,21 @@ pub async fn send_alert(config: &AlertsConfig, subject: &str, message: &str) {
     });
 
     // // Statement: Execute HTTP POST to primary endpoint with fallback logic
-    match client.post(&config.primary.host).json(&payload).send().await {
+    match client
+        .post(&config.primary.host)
+        .json(&payload)
+        .send()
+        .await
+    {
         Ok(_) => info!("Alert sent to primary: {}", config.primary.name),
         Err(e) => {
             warn!("Primary alert failed: {}. Trying failover...", e);
-            if let Err(fe) = client.post(&config.failover.host).json(&payload).send().await {
+            if let Err(fe) = client
+                .post(&config.failover.host)
+                .json(&payload)
+                .send()
+                .await
+            {
                 error!("Failover alert also failed: {}", fe);
             } else {
                 info!("Alert sent to failover: {}", config.failover.name);

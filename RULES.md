@@ -6,8 +6,8 @@
 - **Secure Logging:** Never log raw connection strings or passwords. Always use masking functions (e.g., `mask_url_password`).
 
 ## Vendored Packages
-- **No Manual Edits:** The directories `vendor/json5format` and `vendor/pmdaemon` contain vendored packages managed as git submodules.
-- **Maintenance:** NEVER edit files within these directories directly. Any necessary changes or updates must be performed by updating the submodules from their respective upstream repositories.
+- **No Manual Edits (External):** The directory `vendor/pmdaemon` contains a vendored package managed as a git submodule. NEVER edit files within this directory directly.
+- **Local Packages:** The directory `vendor/json5format` is now managed as a standalone local package within this repository. Edits may be committed directly to the main repository.
 
 ## Local Development with `act`
 - When running GitHub Actions workflows locally using `act`, use the `--artifact-server-path` flag to persist artifacts:

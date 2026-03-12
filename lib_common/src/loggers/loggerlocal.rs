@@ -1,4 +1,3 @@
-
 //! # Local Logger Implementation
 //!
 //! Provides a `tracing`-compatible logger that supports:
@@ -7,20 +6,20 @@
 //! 3. Voice synthesis (TTS) for alerts via `wsay` (Windows) or `espeak` (Linux).
 
 use super::logrecord::PROCESSINFO;
+use chrono::Local;
+use colored::*;
+use glob::glob;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc};
+use tokio::sync::{mpsc, Mutex};
 use tokio::task;
-use colored::*;
-use chrono::Local;
-use glob::glob;
-use std::path::{Path, PathBuf};
-use tracing::{Level, field::Visit, Event, Subscriber};
-use tracing_subscriber::{Layer, registry::LookupSpan, prelude::*};
+use tracing::{field::Visit, Event, Level, Subscriber};
+use tracing_subscriber::{prelude::*, registry::LookupSpan, Layer};
 
 /// Configuration options for voice synthesis alerts.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -37,7 +36,11 @@ impl Default for VoiceOptions {
     fn default() -> Self {
         Self {
             volume: 100,
-            voice: if cfg!(target_os = "linux") { "en+f2".to_string() } else { "5".to_string() },
+            voice: if cfg!(target_os = "linux") {
+                "en+f2".to_string()
+            } else {
+                "5".to_string()
+            },
             levels: vec![6, 5, 4],
         }
     }
@@ -81,15 +84,18 @@ impl LoggerLocalLayer {
         if let Some(file_levels) = &self.options.use_file {
             if file_levels.contains(&log_level) {
                 if let Some(log_file_path) = &self.current_log_file {
-                    let formatted_message = format!("{} [{}] {}\n", rfc9557, self.app_name, message);
+                    let formatted_message =
+                        format!("{} [{}] {}\n", rfc9557, self.app_name, message);
                     let tags_str = serde_json::to_string(tags).unwrap_or_else(|_| "[]".to_string());
-                    
+
                     let result = if tags != &serde_json::json!([]) {
                         OpenOptions::new()
                             .create(true)
                             .append(true)
                             .open(log_file_path)
-                            .and_then(|mut file| writeln!(file, "{}{}", formatted_message, tags_str))
+                            .and_then(|mut file| {
+                                writeln!(file, "{}{}", formatted_message, tags_str)
+                            })
                     } else {
                         OpenOptions::new()
                             .create(true)
@@ -114,19 +120,24 @@ impl LoggerLocalLayer {
                 let app_name_colored = format!("[{}]", self.app_name).truecolor(128, 128, 128);
 
                 let colored_message = match log_level {
-                    6 => message.bright_white().on_bright_red(),    // Fatal
-                    5 => message.bright_red(),                     // Error
-                    4 => message.bright_yellow(),                  // Warn
-                    3 => message.bright_green(),                   // Info
-                    2 => message.bright_white(),                   // Debug
-                    1 => message.bright_cyan(),                    // Trace
-                    _ => message.blue(),                           // Silly
+                    6 => message.bright_white().on_bright_red(), // Fatal
+                    5 => message.bright_red(),                   // Error
+                    4 => message.bright_yellow(),                // Warn
+                    3 => message.bright_green(),                 // Info
+                    2 => message.bright_white(),                 // Debug
+                    1 => message.bright_cyan(),                  // Trace
+                    _ => message.blue(),                         // Silly
                 };
 
                 println!("{}{}\n{}", ts, app_name_colored, colored_message);
                 if tags != &serde_json::json!([]) {
                     if let Ok(tags_str) = serde_json::to_string(tags) {
-                        println!("{}{}{}", ts, app_name_colored, tags_str.truecolor(128, 128, 128));
+                        println!(
+                            "{}{}{}",
+                            ts,
+                            app_name_colored,
+                            tags_str.truecolor(128, 128, 128)
+                        );
                     }
                 }
             }
@@ -202,18 +213,18 @@ where
         };
         event.record(&mut visitor);
 
-        let log_level = visitor.loglevel.unwrap_or_else(|| {
-            match *event.metadata().level() {
+        let log_level = visitor
+            .loglevel
+            .unwrap_or_else(|| match *event.metadata().level() {
                 Level::ERROR => 5,
                 Level::WARN => 4,
                 Level::INFO => 3,
                 Level::DEBUG => 2,
                 Level::TRACE => 1,
-            }
-        });
+            });
 
         let rfc9557 = crate::utils::misc::utils::current_datetime_rfc9557();
-        
+
         self.print_to_tty(log_level, &rfc9557, &visitor.message, &visitor.extras);
         self.log_to_file(log_level, &rfc9557, &visitor.message, &visitor.extras);
         self.handle_voice(log_level, &visitor.message);
@@ -244,7 +255,9 @@ impl LoggerLocal {
 
         // Sort descending by filename (which includes timestamp)
         log_files.sort_by(|a, b| {
-            b.file_name().unwrap_or_default().cmp(a.file_name().unwrap_or_default())
+            b.file_name()
+                .unwrap_or_default()
+                .cmp(a.file_name().unwrap_or_default())
         });
 
         if log_files.len() > 1 {
@@ -278,14 +291,16 @@ impl LoggerLocal {
 
         if self.options.use_file.is_some() {
             let log_base_dir = self.options.log_dir.clone().unwrap_or_else(|| {
-                PROCESSINFO.as_ref().ok()
+                PROCESSINFO
+                    .as_ref()
+                    .ok()
                     .map(|info| PathBuf::from(&info.process_location))
                     .unwrap_or_else(|| PathBuf::from("."))
             });
-            
+
             let _ = std::fs::create_dir_all(&log_base_dir);
             Self::rotate_logs(&self.app_name, &log_base_dir);
-            
+
             let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
             let current_log_filename = format!("{}-{}.log", self.app_name, timestamp);
             current_log_file = Some(log_base_dir.join(current_log_filename));
@@ -318,7 +333,8 @@ impl LoggerLocal {
                             .arg(&msg)
                             .output();
                     };
-                }).await;
+                })
+                .await;
             }
         });
 
@@ -374,7 +390,8 @@ impl LoggerLocal {
                     .arg(&msg)
                     .output();
             };
-        }).await;
+        })
+        .await;
     }
 
     /// Logs a message at level 0 (Silly).
@@ -437,4 +454,3 @@ mod tests {
         assert_eq!(layer.app_name, "test_app");
     }
 }
-

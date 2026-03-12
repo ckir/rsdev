@@ -1,17 +1,17 @@
 //! # Log Record Definition
 //!
-//! Defines the structured log record format (`Logrecord`) used across the 
-//! entire rsdev ecosystem. This structure is designed for compatibility with 
+//! Defines the structured log record format (`Logrecord`) used across the
+//! entire rsdev ecosystem. This structure is designed for compatibility with
 //! PostgreSQL (via `ToSql`/`FromSql`) and JSON serialization.
 
+use crate::utils::misc::sys_info::{get_process_info, ProcessInfo, ProcessInfoError};
+use crate::utils::misc::utils::current_datetime_rfc9557;
 use chrono::{DateTime, Utc};
 use postgres_types::{FromSql, ToSql};
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use serde_json::Value;
 use static_init::dynamic;
-use crate::utils::misc::sys_info::{ProcessInfo, ProcessInfoError, get_process_info};
-use crate::utils::misc::utils::current_datetime_rfc9557;
 
 /// Global static storage for current process information.
 #[dynamic]

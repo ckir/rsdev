@@ -1,6 +1,6 @@
 //! # CNN Market Data Modules
 //!
-//! Provides implementations for CNN-specific market data APIs, 
+//! Provides implementations for CNN-specific market data APIs,
 //! including the Fear and Greed index.
 
 /// API client for CNN data sources.

@@ -3,8 +3,8 @@
 //! This module provides the networking logic to interact with CNN's Fear and Greed index API.
 //! It includes automated retry mechanisms and standardized error logging using `LoggerLocal`.
 
-use crate::retrieve::ky_http::ApiClient;
 use crate::loggers::loggerlocal::LoggerLocal;
+use crate::retrieve::ky_http::ApiClient;
 use reqwest::Method;
 use serde_json::Value;
 use std::sync::Arc;
@@ -38,7 +38,10 @@ impl ApiCallCnn {
     ///
     /// # Errors
     /// Returns an error if the request fails after 3 attempts or if data normalization fails.
-    pub async fn fetch_cnn(&self, date: Option<String>) -> Result<Value, Box<dyn std::error::Error>> {
+    pub async fn fetch_cnn(
+        &self,
+        date: Option<String>,
+    ) -> Result<Value, Box<dyn std::error::Error>> {
         let mut attempts = 0;
         let max_attempts = 3;
 
@@ -52,28 +55,45 @@ impl ApiCallCnn {
             attempts += 1;
             // // No specific headers mentioned for CNN, so send without custom headers.
             // // ApiClient already adds default headers and handles auth token if provided.
-            let response = self.client.request::<Value, ()>(
-                Method::GET,
-                &path,
-                None,
-                None, // // No custom headers for CNN for now
-            ).await?;
+            let response = self
+                .client
+                .request::<Value, ()>(
+                    Method::GET,
+                    &path,
+                    None,
+                    None, // // No custom headers for CNN for now
+                )
+                .await?;
 
             if response.success {
                 if let Some(body) = response.data {
                     return Ok(body);
                 } else {
-                    let error_msg = format!("CNN API returned empty data (Attempt {}/{})", attempts, max_attempts);
-                    self.logger.warn(&error_msg, Some(serde_json::json!({"path": path, "attempt": attempts}))).await;
+                    let error_msg = format!(
+                        "CNN API returned empty data (Attempt {}/{})",
+                        attempts, max_attempts
+                    );
+                    self.logger
+                        .warn(
+                            &error_msg,
+                            Some(serde_json::json!({"path": path, "attempt": attempts})),
+                        )
+                        .await;
                 }
             } else {
                 // // HTTP Level Error (e.g., 403, 404, 500)
-                let http_error = format!("HTTP Request failed for {}: Status {}", path, response.status);
+                let http_error = format!(
+                    "HTTP Request failed for {}: Status {}",
+                    path, response.status
+                );
                 self.logger.error(&http_error, None).await;
             }
 
             if attempts >= max_attempts {
-                let fatal_msg = format!("Final failure: CNN API unreachable or invalid after {} attempts", max_attempts);
+                let fatal_msg = format!(
+                    "Final failure: CNN API unreachable or invalid after {} attempts",
+                    max_attempts
+                );
                 self.logger.fatal(&fatal_msg, None).await;
                 return Err(fatal_msg.into());
             }
@@ -93,7 +113,10 @@ mod tests {
     async fn test_api_call_cnn_new() {
         let logger = Arc::new(LoggerLocal::new("test".into(), None));
         let api_call = ApiCallCnn::new(logger);
-        assert_eq!(api_call.client.base_url.as_str(), "https://production.dataviz.cnn.io/");
+        assert_eq!(
+            api_call.client.base_url.as_str(),
+            "https://production.dataviz.cnn.io/"
+        );
         assert_eq!(api_call.logger.app_name, "test");
     }
 
@@ -101,7 +124,7 @@ mod tests {
     async fn test_fetch_cnn_failure() {
         let logger = Arc::new(LoggerLocal::new("test".into(), None));
         let api_call = ApiCallCnn::new(logger);
-        
+
         // // Test with an invalid path/date to trigger retry logic
         let result = api_call.fetch_cnn(Some("invalid-date".into())).await;
         assert!(result.is_err());

@@ -4,8 +4,8 @@
 //! structured YAML format. Respects .gitignore and creates a file by default.
 
 use clap::{ArgAction, Parser, ValueHint};
-use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
+use ignore::overrides::OverrideBuilder;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fs;
@@ -53,18 +53,28 @@ fn main() {
     let args = Cli::parse();
 
     // Determine names based on canonical path
-    let canonical_path = args.path.canonicalize().unwrap_or_else(|_| args.path.clone());
+    let canonical_path = args
+        .path
+        .canonicalize()
+        .unwrap_or_else(|_| args.path.clone());
     let root_name = canonical_path
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_else(|| "root".to_string());
 
     // Logic for default filename
-    let output_file = args.output.clone().unwrap_or_else(|| {
-        PathBuf::from(format!("{}.yaml", root_name))
-    });
+    let output_file = args
+        .output
+        .clone()
+        .unwrap_or_else(|| PathBuf::from(format!("{}.yaml", root_name)));
 
-    match dir_to_yaml(&args.path, &root_name, args.no_files, args.use_gitignore, &args.exclude) {
+    match dir_to_yaml(
+        &args.path,
+        &root_name,
+        args.no_files,
+        args.use_gitignore,
+        &args.exclude,
+    ) {
         Ok(yaml) => {
             if let Err(e) = fs::write(&output_file, yaml) {
                 eprintln!("Error: Failed to write to file {:?}.", output_file);
@@ -109,8 +119,8 @@ pub fn dir_to_yaml(
             .git_ignore(true)
             .git_global(true)
             .git_exclude(true)
-            .require_git(false) 
-            .add_custom_ignore_filename(".gitignore"); 
+            .require_git(false)
+            .add_custom_ignore_filename(".gitignore");
     }
 
     let walker = builder.build();
@@ -144,7 +154,10 @@ pub fn dir_to_yaml(
         if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
             current_node.children.entry(file_name).or_default();
         } else if !no_files {
-            current_node.files.get_or_insert_with(Vec::new).push(file_name);
+            current_node
+                .files
+                .get_or_insert_with(Vec::new)
+                .push(file_name);
         }
     }
 

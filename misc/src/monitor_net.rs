@@ -20,7 +20,10 @@ async fn check_connection() -> bool {
     let timeout = Duration::from_secs(3);
 
     // Use tokio's async TcpStream and timeout
-    matches!(tokio::time::timeout(timeout, TcpStream::connect(address)).await, Ok(Ok(_)))
+    matches!(
+        tokio::time::timeout(timeout, TcpStream::connect(address)).await,
+        Ok(Ok(_))
+    )
 }
 
 fn play_disconnect_sound() {

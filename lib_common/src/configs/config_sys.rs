@@ -35,11 +35,11 @@ pub enum RuntimeConfigError {
 
     /// Errors resulting from a command execution failure.
     #[error("Command failed with non-zero exit status ({status}): {stderr}")]
-    ExitStatusError { 
+    ExitStatusError {
         /// The exit status code.
-        status: i32, 
+        status: i32,
         /// The error message from stderr.
-        stderr: String 
+        stderr: String,
     },
 
     /// Errors occurring when a command fails to execute.
@@ -231,9 +231,7 @@ fn get_process_basename(exe_path: PathBuf) -> Result<String, RuntimeConfigError>
 fn get_process_location(exe_path: PathBuf) -> Result<String, RuntimeConfigError> {
     if let Some(exe_dir) = exe_path.parent() {
         Ok(exe_dir.to_str().map(|s| s.to_owned()).ok_or_else(|| {
-            std::io::Error::other(
-                "Failed to convert executable directory to string",
-            )
+            std::io::Error::other("Failed to convert executable directory to string")
         })?)
     } else {
         Err(RuntimeConfigError::IoError(std::io::Error::other(
@@ -302,7 +300,7 @@ mod tests {
         // // Setup a temporary directory for config files
         let dir = tempdir().unwrap();
         let config_dir = dir.path();
-        
+
         // // Mock process info
         let basename = "test_unit";
         env::set_var("RUNNING_MODE_TEST_UNIT", "test");
@@ -321,20 +319,26 @@ mod tests {
         let mut mode_file = File::create(mode_path).unwrap();
         writeln!(mode_file, r#"{{"ModeKey": "ModeValue"}}"#).unwrap();
 
-        // // Mock get_current_exe and related (we can't easily mock env::current_exe, 
+        // // Mock get_current_exe and related (we can't easily mock env::current_exe,
         // // so we test the parts that use it indirectly or the logic itself)
-        
+
         // // Since get_runtime_config calls env::current_exe(), it might fail in test env
-        // // if the test binary path is weird, but we can at least verify the logic 
+        // // if the test binary path is weird, but we can at least verify the logic
         // // if we manually invoke the discovery parts.
-        
+
         let result = get_runtime_config();
-        
+
         // // If it fails because of current_exe() in test runner, that's expected
         // // but if it succeeds, we verify the merged options.
         if let Ok(config) = result {
-            assert_eq!(config.config_options.get("GlobalKey").unwrap(), "GlobalValue");
-            assert_eq!(config.config_options.get("CommonKey").unwrap(), "CommonValue");
+            assert_eq!(
+                config.config_options.get("GlobalKey").unwrap(),
+                "GlobalValue"
+            );
+            assert_eq!(
+                config.config_options.get("CommonKey").unwrap(),
+                "CommonValue"
+            );
             assert_eq!(config.config_options.get("ModeKey").unwrap(), "ModeValue");
         }
 

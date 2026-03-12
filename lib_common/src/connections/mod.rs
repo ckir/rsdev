@@ -1,6 +1,6 @@
 //! # Connections Module
 //!
-//! This module handles persistent connections to external services 
+//! This module handles persistent connections to external services
 //! including databases and caching layers.
 
 /// Module for PostgreSQL database connection pooling and management.

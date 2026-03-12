@@ -3,7 +3,10 @@ PROTOC = { value = "C:\\Users\\user\\Development\\Rust\\rsdev\\.vendor\\protoc\\
 
 [build]
 rustflags = [
+    "--cap-lints", "warn",
     "-A", "dead_code",
     "-A", "unused_must_use",
-    "-A", "clippy::legacy_numeric_constants"
+    "-A", "clippy::legacy_numeric_constants",
+    "-A", "missing_docs",
+    "-A", "unused_imports"
 ]

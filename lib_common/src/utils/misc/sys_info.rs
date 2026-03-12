@@ -8,9 +8,9 @@ use std::process::Command;
 use std::result::Result;
 use std::{env, fmt};
 
-use serde::{Deserialize, Serialize};
 use hostname::get;
 use local_ip_address::local_ip;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Errors that can occur while retrieving process or system information.
@@ -26,11 +26,11 @@ pub enum ProcessInfoError {
 
     /// Errors resulting from a command execution failure.
     #[error("Command failed with non-zero exit status ({status}): {stderr}")]
-    ExitStatusError { 
+    ExitStatusError {
         /// The exit status code.
-        status: i32, 
+        status: i32,
         /// The error message from stderr.
-        stderr: String 
+        stderr: String,
     },
 
     /// Errors occurring when a command fails to execute.
@@ -160,9 +160,7 @@ fn get_process_basename(exe_path: PathBuf) -> Result<String, ProcessInfoError> {
 fn get_process_location(exe_path: PathBuf) -> Result<String, ProcessInfoError> {
     if let Some(exe_dir) = exe_path.parent() {
         Ok(exe_dir.to_str().map(|s| s.to_owned()).ok_or_else(|| {
-            std::io::Error::other(
-                "Failed to convert executable directory to string",
-            )
+            std::io::Error::other("Failed to convert executable directory to string")
         })?)
     } else {
         Err(ProcessInfoError::IoError(std::io::Error::other(

@@ -3,9 +3,9 @@
 //! This component handles Nasdaq API calls to determine market operational status.
 //! Refactored to use the standardized `LoggerLocal` instead of standard output.
 
-use crate::markets::nasdaq::apicall::ApiCall;
 use crate::loggers::loggerlocal::LoggerLocal;
-use chrono::{NaiveDateTime, NaiveDate, Utc, Duration};
+use crate::markets::nasdaq::apicall::ApiCall;
+use chrono::{Duration, NaiveDate, NaiveDateTime, Utc};
 use chrono_tz::US::Eastern;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -28,7 +28,7 @@ pub struct MarketStatusData {
     /// String representation of the pre-market closing time.
     pub pre_market_closing_time: String,
     /// String representation of the main market opening time.
-    pub market_opening_time: String, 
+    pub market_opening_time: String,
     /// String representation of the main market closing time.
     pub market_closing_time: String,
     /// String representation of the after-hours market opening time.
@@ -45,7 +45,7 @@ pub struct MarketStatusData {
     pub mrkt_status: String,
     /// Alternative countdown status.
     pub mrkt_count_down: String,
-    
+
     /// Parsed pre-market opening time in New York timezone.
     #[serde(rename = "pmOpenRaw")]
     pub pm_open_raw: NaiveDateTime,
@@ -78,11 +78,16 @@ impl MarketStatus {
     ///
     /// # Errors
     /// Returns an error if the API call fails or the response does not match the expected schema.
-    pub async fn get_status(&self) -> Result<MarketStatusData, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_status(
+        &self,
+    ) -> Result<MarketStatusData, Box<dyn std::error::Error + Send + Sync>> {
         let path = "api/market-info";
 
         // // Fetching raw JSON from the Nasdaq endpoint
-        let raw_json: Value = self.api_call.fetch_nasdaq(path).await
+        let raw_json: Value = self
+            .api_call
+            .fetch_nasdaq(path)
+            .await
             .map_err(|e| format!("Nasdaq API Fetch Error: {}", e))?;
 
         let data_part = raw_json.get("data").unwrap_or(&raw_json);
@@ -90,13 +95,20 @@ impl MarketStatus {
         // // Validating data against the MarketStatusData schema
         match from_value::<MarketStatusData>(data_part.clone()) {
             Ok(data) => {
-                self.logger.debug("Market status schema validated successfully", None).await;
+                self.logger
+                    .debug("Market status schema validated successfully", None)
+                    .await;
                 Ok(data)
             }
             Err(e) => {
                 let error_message = format!("STRICT SCHEMA VALIDATION FAILED: {}", e);
                 // // Logging fatal error with payload for post-mortem analysis
-                self.logger.fatal(&error_message, Some(serde_json::json!({"payload": raw_json}))).await;
+                self.logger
+                    .fatal(
+                        &error_message,
+                        Some(serde_json::json!({"payload": raw_json})),
+                    )
+                    .await;
                 Err(error_message.into())
             }
         }
@@ -123,17 +135,17 @@ impl MarketStatusData {
     /// - `logger`: The Arc-wrapped LocalLogger to use for structured output.
     pub async fn get_sleep_duration(&self, logger: Arc<LoggerLocal>) -> std::time::Duration {
         let now = self.now_ny();
-        
+
         // // If market is already open, no sleep is required
         if self.mrkt_status == "Open" {
             return std::time::Duration::from_secs(0);
         }
 
         // // Determine target from raw timestamps (Pre-market or Main open)
-        let mut target = if now < self.pm_open_raw { 
-            self.pm_open_raw 
-        } else { 
-            self.open_raw 
+        let mut target = if now < self.pm_open_raw {
+            self.pm_open_raw
+        } else {
+            self.open_raw
         };
 
         // // Handle weekends or holidays using next_trade_date
@@ -150,16 +162,18 @@ impl MarketStatusData {
         if target > now {
             let diff = target - now;
             let remaining_str = Self::format_duration(diff);
-            
+
             // // Refactored: Replaced println! with structured logging
-            logger.info(
-                &format!("Target NY Open: {}", target.format("%Y-%m-%d %H:%M:%S")),
-                Some(serde_json::json!({
-                    "remaining_time": remaining_str,
-                    "target_timestamp": target.to_string(),
-                    "current_ny_time": now.to_string()
-                }))
-            ).await;
+            logger
+                .info(
+                    &format!("Target NY Open: {}", target.format("%Y-%m-%d %H:%M:%S")),
+                    Some(serde_json::json!({
+                        "remaining_time": remaining_str,
+                        "target_timestamp": target.to_string(),
+                        "current_ny_time": now.to_string()
+                    })),
+                )
+                .await;
 
             diff.to_std().unwrap_or(std::time::Duration::from_secs(60))
         } else {
@@ -205,10 +219,14 @@ mod tests {
             is_business_day: true,
             mrkt_status: "Closed".into(),
             mrkt_count_down: "00:00:00".into(),
-            pm_open_raw: NaiveDateTime::parse_from_str("2025-03-10 04:00:00", "%Y-%m-%d %H:%M:%S").unwrap(),
-            ah_close_raw: NaiveDateTime::parse_from_str("2025-03-10 20:00:00", "%Y-%m-%d %H:%M:%S").unwrap(),
-            open_raw: NaiveDateTime::parse_from_str("2025-03-10 09:30:00", "%Y-%m-%d %H:%M:%S").unwrap(),
-            close_raw: NaiveDateTime::parse_from_str("2025-03-10 16:00:00", "%Y-%m-%d %H:%M:%S").unwrap(),
+            pm_open_raw: NaiveDateTime::parse_from_str("2025-03-10 04:00:00", "%Y-%m-%d %H:%M:%S")
+                .unwrap(),
+            ah_close_raw: NaiveDateTime::parse_from_str("2025-03-10 20:00:00", "%Y-%m-%d %H:%M:%S")
+                .unwrap(),
+            open_raw: NaiveDateTime::parse_from_str("2025-03-10 09:30:00", "%Y-%m-%d %H:%M:%S")
+                .unwrap(),
+            close_raw: NaiveDateTime::parse_from_str("2025-03-10 16:00:00", "%Y-%m-%d %H:%M:%S")
+                .unwrap(),
         }
     }
 
@@ -216,7 +234,7 @@ mod tests {
     fn test_format_duration() {
         let dur = Duration::hours(1) + Duration::minutes(30) + Duration::seconds(45);
         assert_eq!(MarketStatusData::format_duration(dur), "01:30:45");
-        
+
         let dur2 = Duration::seconds(59);
         assert_eq!(MarketStatusData::format_duration(dur2), "00:00:59");
     }
@@ -226,7 +244,7 @@ mod tests {
         let logger = Arc::new(LoggerLocal::new("test".into(), None));
         let mut data = mock_market_data();
         data.mrkt_status = "Open".into();
-        
+
         let sleep_dur = data.get_sleep_duration(logger).await;
         assert_eq!(sleep_dur, std::time::Duration::from_secs(0));
     }
@@ -236,8 +254,9 @@ mod tests {
         let logger = Arc::new(LoggerLocal::new("test".into(), None));
         let mut data = mock_market_data();
         // // Set pm_open_raw to a far future date to ensure it's > now_ny
-        data.pm_open_raw = NaiveDateTime::parse_from_str("2099-01-01 04:00:00", "%Y-%m-%d %H:%M:%S").unwrap();
-        
+        data.pm_open_raw =
+            NaiveDateTime::parse_from_str("2099-01-01 04:00:00", "%Y-%m-%d %H:%M:%S").unwrap();
+
         let sleep_dur = data.get_sleep_duration(logger).await;
         assert!(sleep_dur.as_secs() > 0);
     }

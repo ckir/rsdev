@@ -155,13 +155,15 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     let interval_duration = Duration::from_secs(args.frequency * 60);
 
-    info!("Starting PostgreSQL monitor. Frequency: {} minute(s)", args.frequency);
+    info!(
+        "Starting PostgreSQL monitor. Frequency: {} minute(s)",
+        args.frequency
+    );
 
     loop {
         // // Statement: Load configuration from cloud using blocking task spawn
-        let config_json_res: Result<Result<Value, _>, _> = tokio::task::spawn_blocking(move || {
-            load_cloud_config(None, None)
-        }).await;
+        let config_json_res: Result<Result<Value, _>, _> =
+            tokio::task::spawn_blocking(move || load_cloud_config(None, None)).await;
 
         let config_json = match config_json_res {
             Ok(Ok(val)) => val,
@@ -194,7 +196,10 @@ async fn main() -> Result<()> {
             alerts = Some(cfg);
         }
 
-        let config = MonitorConfig { postgres_instances, alerts };
+        let config = MonitorConfig {
+            postgres_instances,
+            alerts,
+        };
 
         // // Statement: Iterate through configured instances and verify connectivity
         for instance in &config.postgres_instances {
@@ -230,11 +235,18 @@ async fn check_postgres(entry: &PostgresEntry) -> Result<()> {
         cfg.host(&conn.host);
         cfg.user(&conn.user);
         cfg.dbname(&conn.dbname);
-        if let Some(p) = conn.port { cfg.port(p); }
-        if let Some(pass) = &conn.password { cfg.password(pass); }
+        if let Some(p) = conn.port {
+            cfg.port(p);
+        }
+        if let Some(pass) = &conn.password {
+            cfg.password(pass);
+        }
         cfg
     } else {
-        return Err(anyhow::anyhow!("Missing connection info for {}", entry.db_name));
+        return Err(anyhow::anyhow!(
+            "Missing connection info for {}",
+            entry.db_name
+        ));
     };
 
     // // Statement: Configure SSL mode based on database entry
@@ -249,7 +261,11 @@ async fn check_postgres(entry: &PostgresEntry) -> Result<()> {
     if ssl_mode == SslMode::Disable {
         // // Statement: Connect without TLS
         let (client, connection) = pg_config.connect(NoTls).await?;
-        tokio::spawn(async move { if let Err(e) = connection.await { error!("DB connection error: {}", e); } });
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                error!("DB connection error: {}", e);
+            }
+        });
         client.simple_query("SELECT 1").await?;
     } else {
         // // Statement: Fixed warning by removing 'mut' from root_store
@@ -257,14 +273,20 @@ async fn check_postgres(entry: &PostgresEntry) -> Result<()> {
         let mut config = ClientConfig::builder()
             .with_root_certificates(root_store)
             .with_no_client_auth();
-        
+
         // // Statement: Inject custom verifier to allow connections to self-signed certificates
-        config.dangerous().set_certificate_verifier(Arc::new(NoCertificateVerification));
+        config
+            .dangerous()
+            .set_certificate_verifier(Arc::new(NoCertificateVerification));
         let tls_connector = MakeRustlsConnect::new(config);
 
         let (client, connection) = pg_config.connect(tls_connector).await?;
         // // Statement: Spawn connection handler task
-        tokio::spawn(async move { if let Err(e) = connection.await { error!("DB connection error: {}", e); } });
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                error!("DB connection error: {}", e);
+            }
+        });
         // // Statement: Run health check query
         client.simple_query("SELECT 1").await?;
     }
@@ -286,9 +308,19 @@ pub async fn send_alert(config: &AlertsConfig, subject: &str, message: &str) {
     });
 
     // // Statement: Attempt primary alert with fallback logic
-    if let Err(e) = client.post(&config.primary.host).json(&payload).send().await {
+    if let Err(e) = client
+        .post(&config.primary.host)
+        .json(&payload)
+        .send()
+        .await
+    {
         warn!("Primary alert failed: {}. Trying failover...", e);
-        if let Err(fe) = client.post(&config.failover.host).json(&payload).send().await {
+        if let Err(fe) = client
+            .post(&config.failover.host)
+            .json(&payload)
+            .send()
+            .await
+        {
             error!("Failover alert failed: {}", fe);
         }
     }

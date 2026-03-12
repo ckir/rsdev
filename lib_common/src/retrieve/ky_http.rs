@@ -1,17 +1,20 @@
 //! # HTTP Retrieval Utilities
-//! 
+//!
 //! This module provides a robust, asynchronous API client wrapper around `reqwest`.
 //! it includes middleware support for exponential backoff retries and standardized
 //! JSON response handling.
 
-use reqwest::{header::{HeaderMap, AUTHORIZATION}, Method, Url};
+use reqwest::{
+    header::{HeaderMap, AUTHORIZATION},
+    Method, Url,
+};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
-use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use serde::{de::DeserializeOwned, Serialize};
 
 /// A standardized container for API responses.
-/// 
-/// This struct wraps the deserialized data along with metadata about the 
+///
+/// This struct wraps the deserialized data along with metadata about the
 /// HTTP transaction, such as status codes and headers.
 #[derive(Debug)]
 pub struct ApiResponse<T> {
@@ -28,7 +31,7 @@ pub struct ApiResponse<T> {
 }
 
 /// A flexible asynchronous HTTP client.
-/// 
+///
 /// Built on top of `reqwest_middleware`, it handles base URLs,
 /// authentication tokens, and automatic retries.
 pub struct ApiClient {
@@ -52,10 +55,10 @@ impl ApiClient {
     pub fn new(base_url: &str, auth_token: Option<String>) -> Self {
         // // Parse the base URL to ensure it is valid and absolute
         let url = Url::parse(base_url).expect("Invalid Base URL (must be absolute)");
-        
+
         // // Configure an exponential backoff policy with 3 retries
         let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
-        
+
         // // Construct the client with the retry middleware
         let client = ClientBuilder::new(reqwest::Client::new())
             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
@@ -70,7 +73,7 @@ impl ApiClient {
 
     /// Performs a generic HTTP request and handles the response.
     ///
-    /// This method manages URL joining, header injection, authentication, 
+    /// This method manages URL joining, header injection, authentication,
     /// and JSON serialization/deserialization.
     ///
     /// # Arguments
@@ -166,7 +169,9 @@ mod tests {
     async fn test_api_client_request_failure() {
         let client = ApiClient::new("https://invalid.domain.that.does.not.exist/", None);
         // // This should fail during the send() call
-        let result: anyhow::Result<ApiResponse<Value>> = client.request::<Value, Value>(Method::GET, "path", None, None).await;
+        let result: anyhow::Result<ApiResponse<Value>> = client
+            .request::<Value, Value>(Method::GET, "path", None, None)
+            .await;
         assert!(result.is_err());
     }
 }

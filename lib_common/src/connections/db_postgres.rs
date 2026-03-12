@@ -55,7 +55,7 @@ impl Database {
             .execute(&self.pool)
             .await
             .map_err(|e: sqlx::Error| DbError::QueryError(e.to_string()))?;
-            
+
         Ok(())
     }
 }
@@ -67,7 +67,11 @@ mod tests {
     #[tokio::test]
     async fn test_database_connection_failure() {
         // // Test with an invalid URL to ensure it returns a ConnectionError
-        let result = Database::new("postgres://invalid_user:invalid_pass@localhost/invalid_db", 5).await;
+        let result = Database::new(
+            "postgres://invalid_user:invalid_pass@localhost/invalid_db",
+            5,
+        )
+        .await;
         assert!(result.is_err());
         match result {
             Err(DbError::ConnectionError(_)) => (),

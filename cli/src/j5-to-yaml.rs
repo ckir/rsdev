@@ -3,7 +3,11 @@ use std::fs;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about = "Converts JSON5 to Clean YAML with Block Scalars")]
+#[command(
+    author,
+    version,
+    about = "Converts JSON5 to Clean YAML with Block Scalars"
+)]
 struct Args {
     /// Path to the input .json5 file
     #[arg(short, long)]
@@ -42,7 +46,10 @@ fn main() {
     match serde_yml::from_str::<serde_json::Value>(&yaml_output) {
         Ok(_) => println!("✅ Verification Successful: Output is valid YAML."),
         Err(e) => {
-            eprintln!("⚠️ Verification Failed: The generated YAML is invalid! Error: {}", e);
+            eprintln!(
+                "⚠️ Verification Failed: The generated YAML is invalid! Error: {}",
+                e
+            );
             std::process::exit(1);
         }
     }

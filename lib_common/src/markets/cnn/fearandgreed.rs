@@ -1,13 +1,13 @@
 //! # Fear and Greed Index Module
 //!
-//! Provides structures and logic to fetch, deserialize, and normalize 
-//! CNN Business's "Fear & Greed Index" data. This includes historical 
+//! Provides structures and logic to fetch, deserialize, and normalize
+//! CNN Business's "Fear & Greed Index" data. This includes historical
 //! data points and multiple market indicators used for index calculation.
 
-use crate::markets::cnn::apicallcnn::ApiCallCnn;
 use crate::loggers::loggerlocal::LoggerLocal;
-use chrono::{DateTime, Utc, TimeZone};
-use serde::{Deserialize, Serialize, Deserializer};
+use crate::markets::cnn::apicallcnn::ApiCallCnn;
+use chrono::{DateTime, TimeZone, Utc};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::from_value;
 use std::sync::Arc;
 
@@ -130,20 +130,27 @@ impl FearAndGreed {
     ///
     /// # Errors
     /// Returns an error if the API call fails or if the response cannot be normalized.
-    pub async fn get_full_report(&self, date: Option<String>) -> Result<FearAndGreedData, Box<dyn std::error::Error>> {
+    pub async fn get_full_report(
+        &self,
+        date: Option<String>,
+    ) -> Result<FearAndGreedData, Box<dyn std::error::Error>> {
         // // Execute the API call
         let raw_json = self.api_call.fetch_cnn(date).await?;
 
         // // Attempt to normalize the raw JSON into the FearAndGreedData structure
         match from_value::<FearAndGreedData>(raw_json.clone()) {
             Ok(normalized) => {
-                self.logger.debug("Fear and Greed data normalized successfully", None).await;
+                self.logger
+                    .debug("Fear and Greed data normalized successfully", None)
+                    .await;
                 Ok(normalized)
             }
             Err(e) => {
                 let err_msg = format!("Normalization failed for Fear and Greed: {}", e);
                 // // Log failure with raw JSON for debugging
-                self.logger.fatal(&err_msg, Some(serde_json::json!({"raw": raw_json}))).await;
+                self.logger
+                    .fatal(&err_msg, Some(serde_json::json!({"raw": raw_json})))
+                    .await;
                 Err(err_msg.into())
             }
         }
@@ -160,8 +167,8 @@ impl FearAndGreedData {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
     use chrono::Datelike;
+    use serde_json::json;
 
     #[test]
     fn test_timestamp_deserialization() {
@@ -206,6 +213,9 @@ mod tests {
 
         let deserialized: FearAndGreedData = serde_json::from_value(raw_data).unwrap();
         assert_eq!(deserialized.fear_and_greed.score, 45.0);
-        assert_eq!(deserialized.get_latest_historical_score().unwrap().value, 45.0);
+        assert_eq!(
+            deserialized.get_latest_historical_score().unwrap().value,
+            45.0
+        );
     }
 }

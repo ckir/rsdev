@@ -1,7 +1,7 @@
 //! # Yahoo Finance Protobuf Handler
 //!
-//! This module contains the Rust representations of the Yahoo Finance `PricingData` 
-//! protocol buffer messages. It uses the `prost` framework for efficient binary 
+//! This module contains the Rust representations of the Yahoo Finance `PricingData`
+//! protocol buffer messages. It uses the `prost` framework for efficient binary
 //! deserialization of real-time market data.
 
 use prost::Message;
