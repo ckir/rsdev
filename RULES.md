@@ -5,6 +5,10 @@
 - **Async by Default:** Use `tokio` for all I/O-bound tasks to ensure responsiveness, especially when monitoring multiple services.
 - **Secure Logging:** Never log raw connection strings or passwords. Always use masking functions (e.g., `mask_url_password`).
 
+## Vendored Packages
+- **No Manual Edits:** The directories `vendor/json5format` and `vendor/pmdaemon` contain vendored packages managed as git submodules.
+- **Maintenance:** NEVER edit files within these directories directly. Any necessary changes or updates must be performed by updating the submodules from their respective upstream repositories.
+
 ## Local Development with `act`
 - When running GitHub Actions workflows locally using `act`, use the `--artifact-server-path` flag to persist artifacts:
   ```bash

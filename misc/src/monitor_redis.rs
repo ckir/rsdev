@@ -103,20 +103,20 @@ async fn main() -> Result<()> {
 
         let mut redis_urls = Vec::new();
         // // Statement: Parse Redis instances from JSON pointer
-        if let Some(cloud_config) = config_json.pointer("/commonAll/db/redis/cloud") {
-            if let Ok(entries) = serde_json::from_value::<Vec<RedisEntry>>(cloud_config.clone()) {
-                for entry in entries.into_iter().filter(|e| e.monitor) {
-                    redis_urls.push((entry.db_name, entry.db_url));
-                }
+        if let Some(cloud_config) = config_json.pointer("/commonAll/db/redis/cloud")
+            && let Ok(entries) = serde_json::from_value::<Vec<RedisEntry>>(cloud_config.clone())
+        {
+            for entry in entries.into_iter().filter(|e| e.monitor) {
+                redis_urls.push((entry.db_name, entry.db_url));
             }
         }
 
         let mut alerts = None;
         // // Statement: Parse alert configuration if available
-        if let Some(alerts_json) = config_json.pointer("/commonAll/alerts") {
-            if let Ok(cfg) = serde_json::from_value::<AlertsConfig>(alerts_json.clone()) {
-                alerts = Some(cfg);
-            }
+        if let Some(alerts_json) = config_json.pointer("/commonAll/alerts")
+            && let Ok(cfg) = serde_json::from_value::<AlertsConfig>(alerts_json.clone())
+        {
+            alerts = Some(cfg);
         }
 
         // // Statement: Iterate through configured instances and verify connectivity
@@ -127,7 +127,7 @@ async fn main() -> Result<()> {
                         Ok(_) => info!("SUCCESS: Redis instance '{}' is reachable.", name),
                         Err(e) => {
                             error!("FAILURE: Redis '{}' unreachable: {}", name, e);
-                            let masked_url = url.split('@').last().unwrap_or(&url);
+                            let masked_url = url.split('@').next_back().unwrap_or(&url);
                             if let Some(ref alert_cfg) = alerts {
                                 send_alert(alert_cfg, &name, &format!("{} - {}", masked_url, e)).await;
                             }

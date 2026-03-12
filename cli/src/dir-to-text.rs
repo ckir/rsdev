@@ -99,11 +99,9 @@ fn run(args: &Cli) -> Result<(), Box<dyn std::error::Error>> {
 
         if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
             current_node.children.entry(name).or_default();
-        } else {
-            if let Ok(content) = read_file_if_text(entry_path) {
-                current_node.files.get_or_insert_with(Vec::new).push(name.clone());
-                file_contents.push((rel_path.to_string_lossy().into_owned(), content));
-            }
+        } else if let Ok(content) = read_file_if_text(entry_path) {
+            current_node.files.get_or_insert_with(Vec::new).push(name.clone());
+            file_contents.push((rel_path.to_string_lossy().into_owned(), content));
         }
     }
 
@@ -124,12 +122,11 @@ fn run(args: &Cli) -> Result<(), Box<dyn std::error::Error>> {
     for (path, content) in file_contents {
         let file_block = format!("\n--- FILE: {} ---\n{}\n--- END FILE ---\n", path, content);
         
-        if let Some(max_chars) = args.max {
-            if current_buffer.len() + file_block.len() > max_chars {
-                save_part(&args.output, &root_name, part_number, &current_buffer, true)?;
-                part_number += 1;
-                current_buffer = format!("--- PART {} ---\n", part_number);
-            }
+        if let Some(max_chars) = args.max 
+            && current_buffer.len() + file_block.len() > max_chars {
+            save_part(&args.output, &root_name, part_number, &current_buffer, true)?;
+            part_number += 1;
+            current_buffer = format!("--- PART {} ---\n", part_number);
         }
         current_buffer.push_str(&file_block);
     }

@@ -88,9 +88,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let bin_path = target.src_path.clone().into_std_path_buf();
                 let bin_name = bin_path.file_name().unwrap().to_str().unwrap();
 
-                if let Some(ref filter) = args.bin {
-                    if bin_name != filter { continue; }
-                }
+                if let Some(ref filter) = args.bin 
+                    && bin_name != filter { continue; }
 
                 println!("\n{} (Crate: {})", bin_name, pkg.name);
                 let mut visited = BTreeSet::new();
@@ -145,7 +144,7 @@ fn process_import(import: &str, root: &Path, crate_map: &HashMap<String, PathBuf
     }
 
     if let Some(resolved) = target_rs {
-        println!("{}{} {}", indent, "└──", import);
+        println!("{}└── {}", indent, import);
         trace_deps(&resolved, next_root, crate_map, (indent.len() / 2) + 1, visited);
     }
 }

@@ -151,8 +151,7 @@ fn get_process_basename(exe_path: PathBuf) -> Result<String, ProcessInfoError> {
             return Ok(basename.to_string());
         }
     }
-    Err(ProcessInfoError::IoError(std::io::Error::new(
-        std::io::ErrorKind::Other,
+    Err(ProcessInfoError::IoError(std::io::Error::other(
         "Failed to get the process basename",
     )))
 }
@@ -161,14 +160,12 @@ fn get_process_basename(exe_path: PathBuf) -> Result<String, ProcessInfoError> {
 fn get_process_location(exe_path: PathBuf) -> Result<String, ProcessInfoError> {
     if let Some(exe_dir) = exe_path.parent() {
         Ok(exe_dir.to_str().map(|s| s.to_owned()).ok_or_else(|| {
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
+            std::io::Error::other(
                 "Failed to convert executable directory to string",
             )
         })?)
     } else {
-        Err(ProcessInfoError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        Err(ProcessInfoError::IoError(std::io::Error::other(
             "Failed to get the process location",
         )))
     }
@@ -231,8 +228,7 @@ fn get_process_host() -> Result<(String, String), ProcessInfoError> {
     let host_name: String = match get() {
         Ok(name) => name.to_string_lossy().into_owned(),
         Err(e) => {
-            return Err(ProcessInfoError::IoError(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(ProcessInfoError::IoError(std::io::Error::other(
                 e.to_string(),
             )));
         }
@@ -240,8 +236,7 @@ fn get_process_host() -> Result<(String, String), ProcessInfoError> {
     let host_ip: String = match local_ip() {
         Ok(ip) => ip.to_string(),
         Err(e) => {
-            return Err(ProcessInfoError::IoError(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(ProcessInfoError::IoError(std::io::Error::other(
                 e.to_string(),
             )));
         }

@@ -178,10 +178,10 @@ pub fn get_runtime_config() -> Result<RuntimeConfig, RuntimeConfigError> {
 
     // // Build configuration using config-rs
     let _config_data: Box<dyn ConfigurationRoot> = DefaultConfigurationBuilder::new()
-        .add_json_file(&_config_global_file.is().optional())
-        .add_json_file(&_config_common_file.is().optional())
-        .add_json_file(&_config_mode_file.is().optional())
-        .add_json_file(&_config_platform_file.is().optional())
+        .add_json_file(_config_global_file.is().optional())
+        .add_json_file(_config_common_file.is().optional())
+        .add_json_file(_config_mode_file.is().optional())
+        .add_json_file(_config_platform_file.is().optional())
         .build()
         .unwrap();
 
@@ -222,8 +222,7 @@ fn get_process_basename(exe_path: PathBuf) -> Result<String, RuntimeConfigError>
             return Ok(basename.to_string());
         }
     }
-    Err(RuntimeConfigError::IoError(std::io::Error::new(
-        std::io::ErrorKind::Other,
+    Err(RuntimeConfigError::IoError(std::io::Error::other(
         "Failed to get the process basename",
     )))
 }
@@ -232,14 +231,12 @@ fn get_process_basename(exe_path: PathBuf) -> Result<String, RuntimeConfigError>
 fn get_process_location(exe_path: PathBuf) -> Result<String, RuntimeConfigError> {
     if let Some(exe_dir) = exe_path.parent() {
         Ok(exe_dir.to_str().map(|s| s.to_owned()).ok_or_else(|| {
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
+            std::io::Error::other(
                 "Failed to convert executable directory to string",
             )
         })?)
     } else {
-        Err(RuntimeConfigError::IoError(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        Err(RuntimeConfigError::IoError(std::io::Error::other(
             "Failed to get the process location",
         )))
     }

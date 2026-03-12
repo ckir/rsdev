@@ -20,10 +20,7 @@ async fn check_connection() -> bool {
     let timeout = Duration::from_secs(3);
 
     // Use tokio's async TcpStream and timeout
-    match tokio::time::timeout(timeout, TcpStream::connect(address)).await {
-        Ok(Ok(_)) => true,
-        _ => false,
-    }
+    matches!(tokio::time::timeout(timeout, TcpStream::connect(address)).await, Ok(Ok(_)))
 }
 
 fn play_disconnect_sound() {
@@ -82,16 +79,14 @@ async fn main() -> Result<()> {
             tokio::task::spawn_blocking(play_disconnect_sound)
                 .await
                 .ok();
-        } else {
-            if !is_currently_connected {
-                // Connection restored
-                if let Some(start) = disconnect_start_time {
-                    let duration = start.elapsed();
-                    info!("Connection restored. Down for {:?}", duration);
-                }
-                is_currently_connected = true;
-                disconnect_start_time = None;
+        } else if !is_currently_connected {
+            // Connection restored
+            if let Some(start) = disconnect_start_time {
+                let duration = start.elapsed();
+                info!("Connection restored. Down for {:?}", duration);
             }
+            is_currently_connected = true;
+            disconnect_start_time = None;
         }
 
         tokio::time::sleep(Duration::from_secs(interval_secs)).await;

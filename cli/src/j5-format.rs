@@ -174,7 +174,7 @@ impl Opt {
     fn from_stdin(buf: &mut String) -> Result<usize, io::Error> {
         if let Some(test_buffer) = tests::TEST_BUFFER.lock().unwrap().as_ref() {
             *buf = test_buffer.clone();
-            Ok(buf.as_bytes().len())
+            Ok(buf.len())
         } else {
             io::stdin().read_to_string(buf)
         }
@@ -331,23 +331,23 @@ mod tests {
 
     #[test]
     fn test_args() {
-        let args = Opt::from_iter(vec![""].iter());
+        let args = Opt::from_iter([""].iter());
         assert_eq!(args.files.len(), 0);
-        assert_eq!(args.replace, false);
-        assert_eq!(args.no_trailing_commas, false);
-        assert_eq!(args.one_element_lines, false);
-        assert_eq!(args.sort_arrays, false);
+        assert!(!args.replace);
+        assert!(!args.no_trailing_commas);
+        assert!(!args.one_element_lines);
+        assert!(!args.sort_arrays);
         assert_eq!(args.indent, 4);
 
         let some_filename = "some_file.json5";
         let args = Opt::from_iter(
-            vec!["formatjson5", "-r", "-n", "-o", "-s", "-i", "2", some_filename].iter(),
+            ["formatjson5", "-r", "-n", "-o", "-s", "-i", "2", some_filename].iter(),
         );
         assert_eq!(args.files.len(), 1);
-        assert_eq!(args.replace, true);
-        assert_eq!(args.no_trailing_commas, true);
-        assert_eq!(args.one_element_lines, true);
-        assert_eq!(args.sort_arrays, true);
+        assert!(args.replace);
+        assert!(args.no_trailing_commas);
+        assert!(args.one_element_lines);
+        assert!(args.sort_arrays);
         assert_eq!(args.indent, 2);
 
         let filename = args.files[0].clone().into_os_string().to_string_lossy().to_string();

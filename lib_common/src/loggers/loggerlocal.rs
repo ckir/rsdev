@@ -89,7 +89,7 @@ impl LoggerLocalLayer {
                             .create(true)
                             .append(true)
                             .open(log_file_path)
-                            .and_then(|mut file| write!(file, "{}{}\n", formatted_message, tags_str))
+                            .and_then(|mut file| writeln!(file, "{}{}", formatted_message, tags_str))
                     } else {
                         OpenOptions::new()
                             .create(true)
@@ -237,10 +237,8 @@ impl LoggerLocal {
         let mut log_files: Vec<PathBuf> = Vec::new();
 
         if let Ok(entries) = glob(&pattern) {
-            for entry in entries {
-                if let Ok(path) = entry {
-                    log_files.push(path);
-                }
+            for path in entries.flatten() {
+                log_files.push(path);
             }
         }
 

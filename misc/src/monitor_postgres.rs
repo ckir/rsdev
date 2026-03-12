@@ -179,19 +179,19 @@ async fn main() -> Result<()> {
 
         let mut postgres_instances = Vec::new();
         // // Statement: Parse PostgreSQL instances from JSON pointer
-        if let Some(cloud_config) = config_json.pointer("/commonAll/db/postgres/cloud") {
-            if let Ok(entries) = serde_json::from_value::<Vec<PostgresEntry>>(cloud_config.clone()) {
-                // // Statement: Only include instances marked for monitoring
-                postgres_instances = entries.into_iter().filter(|e| e.monitor).collect();
-            }
+        if let Some(cloud_config) = config_json.pointer("/commonAll/db/postgres/cloud")
+            && let Ok(entries) = serde_json::from_value::<Vec<PostgresEntry>>(cloud_config.clone())
+        {
+            // // Statement: Only include instances marked for monitoring
+            postgres_instances = entries.into_iter().filter(|e| e.monitor).collect();
         }
 
         let mut alerts = None;
         // // Statement: Parse alert configuration if available
-        if let Some(alerts_json) = config_json.pointer("/commonAll/alerts") {
-            if let Ok(cfg) = serde_json::from_value::<AlertsConfig>(alerts_json.clone()) {
-                alerts = Some(cfg);
-            }
+        if let Some(alerts_json) = config_json.pointer("/commonAll/alerts")
+            && let Ok(cfg) = serde_json::from_value::<AlertsConfig>(alerts_json.clone())
+        {
+            alerts = Some(cfg);
         }
 
         let config = MonitorConfig { postgres_instances, alerts };
@@ -200,12 +200,12 @@ async fn main() -> Result<()> {
         for instance in &config.postgres_instances {
             if let Err(e) = check_postgres(instance).await {
                 error!("FAILURE: Instance '{}' error: {:#}", instance.db_name, e);
-                
+
                 // // Statement: Handle alerting logic based on CLI flags and config
-                if !args.noalert {
-                    if let Some(ref alert_cfg) = config.alerts {
-                        send_alert(alert_cfg, &instance.db_name, &e.to_string()).await;
-                    }
+                if !args.noalert
+                    && let Some(ref alert_cfg) = config.alerts
+                {
+                    send_alert(alert_cfg, &instance.db_name, &e.to_string()).await;
                 }
             } else {
                 info!("SUCCESS: Instance '{}' is healthy.", instance.db_name);

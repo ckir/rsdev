@@ -68,13 +68,12 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     let output_path = Path::new(&args.output);
-    if let Some(parent) = output_path.parent() {
-        if !parent.exists() && !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent).context("Failed to create output directory")?;
-        }
+    if let Some(parent) = output_path.parent() 
+        && !parent.exists() && !parent.as_os_str().is_empty() {
+        std::fs::create_dir_all(parent).context("Failed to create output directory")?;
     }
 
-    let file = File::create(&output_path)
+    let file = File::create(output_path)
         .context(format!("Failed to create output file: {}", args.output))?;
     let mut zip = zip::ZipWriter::new(file);
 

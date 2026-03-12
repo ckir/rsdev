@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ciphertext = encryptor.encrypt_padded_vec_mut::<Pkcs7>(&plaintext);
 
     // Encode IV and ciphertext to Base64
-    let iv_base64 = general_purpose::STANDARD.encode(&iv_bytes);
+    let iv_base64 = general_purpose::STANDARD.encode(iv_bytes);
     let ciphertext_base64 = general_purpose::STANDARD.encode(&ciphertext); // ciphertext now contains the ciphertext
 
     // Write the IV and ciphertext to the output file, separated by a newline

@@ -1,2 +1,9 @@
 [env]
 PROTOC = { value = "C:\\Users\\user\\Development\\Rust\\rsdev\\.vendor\\protoc\\bin\\protoc.exe", force = true }
+
+[build]
+rustflags = [
+    "-A", "dead_code",
+    "-A", "unused_must_use",
+    "-A", "clippy::legacy_numeric_constants"
+]
