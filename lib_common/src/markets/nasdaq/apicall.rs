@@ -15,9 +15,9 @@ use tokio::time::{sleep, Duration};
 /// Handles network calls to Nasdaq API services.
 pub struct ApiCall {
     /// The underlying HTTP client used for requests.
-    client: ApiClient,
+    pub client: ApiClient,
     /// A shared logger instance for recording request status and errors.
-    logger: Arc<LoggerLocal>,
+    pub logger: Arc<LoggerLocal>,
 }
 
 impl ApiCall {
@@ -27,7 +27,7 @@ impl ApiCall {
     /// * `logger` - An `Arc` pointer to a `LoggerLocal` instance for thread-safe logging.
     pub fn new(logger: Arc<LoggerLocal>) -> Self {
         Self {
-            // Initialize the client with the base Nasdaq API URL.
+            // // Initialize the client with the base Nasdaq API URL.
             client: ApiClient::new("https://api.nasdaq.com/", None),
             logger,
         }
@@ -49,12 +49,12 @@ impl ApiCall {
 
         loop {
             attempts += 1;
-            // Generate a fresh set of browser-mimic headers for each attempt.
+            // // Generate a fresh set of browser-mimic headers for each attempt.
             let headers = self.get_nasdaq_headers();
 
-            // Execute the network request.
-            // Generics: <Value> for the expected response type, <()> for no request body.
-            // Arguments: method, path, optional headers, optional body.
+            // // Execute the network request.
+            // // Generics: <Value> for the expected response type, <()> for no request body.
+            // // Arguments: method, path, optional headers, optional body.
             let response = self.client.request::<Value, ()>(
                 Method::GET,
                 path,
@@ -62,38 +62,38 @@ impl ApiCall {
                 None,
             ).await?;
 
-            // Check if the HTTP request itself was successful.
+            // // Check if the HTTP request itself was successful.
             if response.success {
                 if let Some(json) = response.data {
-                    // Nasdaq API often returns 200 OK but includes an error code in the JSON body.
+                    // // Nasdaq API often returns 200 OK but includes an error code in the JSON body.
                     let r_code = json["status"]["rCode"].as_i64().unwrap_or(0);
                     
                     if r_code == 200 {
                         return Ok(json);
                     }
 
-                    // // Statement: Log internal error matching the required (level, msg, extras) signature.
+                    // // Log internal error matching the required (level, msg, extras) signature.
                     self.logger.log(
-                        1, // Log level
+                        1, // // Log level
                         &format!("Nasdaq API Internal Error (rCode {}): Attempt {}/{}", r_code, attempts, max_attempts),
-                        None // No extra JSON data
+                        None // // No extra JSON data
                     ).await;
                 }
             } else {
-                // // Statement: Log network failure matching the required (level, msg, extras) signature.
+                // // Log network failure matching the required (level, msg, extras) signature.
                 self.logger.log(
-                    1, // Log level
+                    1, // // Log level
                     &format!("HTTP Failure (Status {}): Attempt {}/{}", response.status, attempts, max_attempts),
                     None
                 ).await;
             }
 
-            // Exit the loop if maximum retries are reached.
+            // // Exit the loop if maximum retries are reached.
             if attempts >= max_attempts {
                 return Err("Max retries exceeded for Nasdaq API".into());
             }
 
-            // Apply a linear backoff delay (1s, 2s) before the next attempt.
+            // // Apply a linear backoff delay (1s, 2s) before the next attempt.
             sleep(Duration::from_secs(attempts)).await;
         }
     }
@@ -102,10 +102,10 @@ impl ApiCall {
     ///
     /// Nasdaq's API filters requests that do not appear to originate from a valid browser
     /// session. This helper ensures all necessary security and session headers are present.
-    fn get_nasdaq_headers(&self) -> HeaderMap {
+    pub fn get_nasdaq_headers(&self) -> HeaderMap {
         let mut headers = HeaderMap::new();
         
-        // Define the list of headers to be injected into the request.
+        // // Define the list of headers to be injected into the request.
         let header_list = [
             ("accept", "application/json, text/plain, */*"),
             ("accept-language", "en-US,en;q=0.9"),
@@ -123,7 +123,7 @@ impl ApiCall {
             ("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"),
         ];
 
-        // Iterate and insert headers into the map.
+        // // Iterate and insert headers into the map.
         for (key, val) in header_list {
             if let Ok(value) = HeaderValue::from_str(val) {
                 headers.insert(key, value);
@@ -131,5 +131,45 @@ impl ApiCall {
         }
 
         headers
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::loggers::loggerlocal::LoggerLocal;
+    use std::sync::Arc;
+
+    #[tokio::test]
+    async fn test_api_call_new() {
+        let logger = Arc::new(LoggerLocal::new("test".into(), None));
+        let api_call = ApiCall::new(logger);
+        // // Validate base URL and logger assignment
+        assert_eq!(api_call.client.base_url.as_str(), "https://api.nasdaq.com/");
+        assert_eq!(api_call.logger.app_name, "test");
+    }
+
+    #[test]
+    fn test_get_nasdaq_headers() {
+        let logger = Arc::new(LoggerLocal::new("test".into(), None));
+        let api_call = ApiCall::new(logger);
+        let headers = api_call.get_nasdaq_headers();
+        
+        // // Verify essential headers for Nasdaq anti-bot bypass
+        assert!(headers.contains_key("user-agent"));
+        assert!(headers.contains_key("accept"));
+        assert!(headers.contains_key("origin"));
+        assert_eq!(headers.get("origin").unwrap(), "https://www.nasdaq.com");
+    }
+
+    #[tokio::test]
+    async fn test_fetch_nasdaq_failure() {
+        let logger = Arc::new(LoggerLocal::new("test".into(), None));
+        let api_call = ApiCall::new(logger);
+        
+        // // Attempting to fetch an invalid path should eventually trigger retry exhaustion
+        // // or a direct 404/network error.
+        let result = api_call.fetch_nasdaq("invalid-path-for-testing").await;
+        assert!(result.is_err());
     }
 }

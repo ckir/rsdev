@@ -15,13 +15,15 @@ use std::sync::Arc;
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // // Statement: Initialize LoggerLocal with required app_name and None for default options
     // // Fixed E0061: Added "market_test" as app name and None for options
-    let logger = Arc::new(LoggerLocal::new("market_test".to_string(), None));
+    let logger_inst = LoggerLocal::new("market_test".to_string(), None);
+    logger_inst.init_global();
+    let logger = Arc::new(logger_inst);
 
     // // Statement: Initialize ApiCall service by providing the logger
     let api_call = Arc::new(ApiCall::new(Arc::clone(&logger)));
 
     // // Statement: Initialize the market status provider
-    let provider = MarketStatus::new(api_call, logger);
+    let provider = MarketStatus::new(api_call, Arc::clone(&logger));
 
     println!("[*] Requesting live data from Nasdaq API...");
 
@@ -34,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             println!("-----------------------------------------------");
             
             // // Statement: Show calculated sleep duration for verification
-            let sleep_dur = data.get_sleep_duration();
+            let sleep_dur = data.get_sleep_duration(Arc::clone(&logger)).await;
             println!("[INFO] Calculated sleep duration: {:?}", sleep_dur);
         }
         Err(e) => {

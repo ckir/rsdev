@@ -20,6 +20,7 @@ async fn main() {
 
     let app_name = "test_app".to_string();
     let logger = LoggerLocal::new(app_name.clone(), Some(options));
+    logger.init_global();
 
     // Log some messages
     logger.info("This is an info message", None).await;
@@ -57,10 +58,12 @@ async fn main() {
 
     // Test log rotation implicitly (only one file should exist after new is called again)
     // Create another logger instance, which should trigger rotation
-    let _another_logger = LoggerLocal::new(app_name.clone(), Some(LoggerLocalOptions {
+    let another_logger = LoggerLocal::new(app_name.clone(), Some(LoggerLocalOptions {
         log_dir: Some(log_dir_path.clone()),
+        use_file: Some(vec![6, 5, 4, 3, 2, 1, 0]),
         ..Default::default()
     }));
+    let _layer = another_logger.init_layer();
     
     sleep(Duration::from_millis(100)).await;
 

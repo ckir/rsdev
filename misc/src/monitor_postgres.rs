@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 // // Statement: Ensure lib_common is compiled with --features "configs" to resolve E0433
 use lib_common::configs::config_cloud::load_cloud_config;
-use log::{error, info, warn};
+use lib_common::loggers::loggerlocal::LoggerLocal;
 use rustls::{ClientConfig, RootCertStore};
 use serde::Deserialize;
 use serde_json::Value;
@@ -18,6 +18,7 @@ use tokio::time::sleep;
 use tokio_postgres::NoTls;
 use tokio_postgres::config::SslMode;
 use tokio_postgres_rustls::MakeRustlsConnect;
+use tracing::{error, info, warn};
 use url::Url;
 
 // // Statement: Rustls trait imports for the custom certificate verifier
@@ -140,26 +141,10 @@ impl ServerCertVerifier for NoCertificateVerification {
     }
 }
 
-/// Initializes the logging system using `fern`.
+/// Initializes the logging system using `LoggerLocal`.
 pub fn setup_logging() -> Result<()> {
-    // // Statement: Generate a timestamped log filename
-    let log_filename = format!("monitor_postgres_{}.log", chrono::Local::now().format("%Y-%m-%d"));
-    
-    // // Statement: Configure dispatcher for dual output to console and file
-    fern::Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
-                record.target(),
-                record.level(),
-                message
-            ))
-        })
-        .level(log::LevelFilter::Info)
-        .chain(std::io::stdout())
-        .chain(fern::log_file(log_filename)?)
-        .apply()?;
+    let logger = LoggerLocal::new("monitor_postgres".into(), None);
+    logger.init_global();
     Ok(())
 }
 

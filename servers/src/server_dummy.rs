@@ -1,11 +1,13 @@
 use actix_web::{App, HttpResponse, HttpServer, Responder, get};
 use chrono::Utc;
+use lib_common::loggers::loggerlocal::LoggerLocal;
 use rustls::ServerConfig;
 use rustls_pki_types::PrivateKeyDer;
 use serde::Serialize;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
+use tracing::info;
 
 #[derive(Serialize)]
 struct StatusResponse {
@@ -76,6 +78,10 @@ async fn main() -> std::io::Result<()> {
     // Explicitly install the default crypto provider for rustls
     let _ = rustls::crypto::ring::default_provider().install_default();
 
+    // Initialize logging
+    let logger = LoggerLocal::new("server_dummy".into(), None);
+    logger.init_global();
+
     let port = env::args()
         .nth(1)
         .unwrap_or_else(|| "3000".to_string())
@@ -83,7 +89,7 @@ async fn main() -> std::io::Result<()> {
         .expect("Port must be a number");
 
     let config = load_rustls_config();
-    println!("HTTPS Server running on port {}", port);
+    info!("HTTPS Server running on port {}", port);
 
     HttpServer::new(|| App::new().service(index).service(status))
         .bind_rustls_0_23(("0.0.0.0", port), config)?

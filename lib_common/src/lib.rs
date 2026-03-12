@@ -10,8 +10,6 @@
 // // These statements ensure the compiler recognizes the crates are intentionally 
 // // included when their corresponding features are enabled.
 
-#[cfg(feature = "loggers")]
-use fern as _;
 #[cfg(feature = "configs")]
 use json5 as _;
 #[cfg(feature = "loggers")]
@@ -22,8 +20,13 @@ use sha2 as _;
 use tokio_postgres as _;
 #[cfg(feature = "retrieve")]
 use tokio_tungstenite as _;
+#[cfg(feature = "retrieve")]
+use futures_util as _;
 #[cfg(feature = "loggers")]
 use tracing as _;
+#[cfg(feature = "loggers")]
+use tracing_appender as _;
+use anyhow as _;
 #[cfg(feature = "retrieve")]
 use url as _;
 #[cfg(feature = "utils")]

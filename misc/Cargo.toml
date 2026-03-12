@@ -10,12 +10,12 @@ anyhow = { workspace = true }
 chrono = { workspace = true }
 # A simple-to-use, efficient, and full-featured command-line argument parser.
 clap = { workspace = true }
-# A configurable logger for Rust.
-fern = { workspace = true }
 # A shared library for this project.
-lib_common = { workspace = true, features = ["configs"] }
+lib_common = { workspace = true, features = ["configs", "loggers"] }
 # A lightweight logging facade for Rust.
 log = { workspace = true }
+# A tracing framework for Rust.
+tracing = { workspace = true }
 # A crate that provides an abstraction over native TLS implementations.
 native-tls = { workspace = true }
 # A native-tls implementation for rust-postgres.

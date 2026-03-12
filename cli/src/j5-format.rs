@@ -160,7 +160,7 @@ impl Opt {
 #[cfg(test)]
 impl Opt {
     fn args() -> Self {
-        if let Some(test_args) = unsafe { &self::tests::TEST_ARGS } {
+        if let Some(test_args) = tests::TEST_ARGS.lock().unwrap().as_ref() {
             Self::from_clap(
                 &Self::clap()
                     .get_matches_from_safe(test_args)
@@ -171,20 +171,20 @@ impl Opt {
         }
     }
 
-    fn from_stdin(mut buf: &mut String) -> Result<usize, io::Error> {
-        if let Some(test_buffer) = unsafe { &mut self::tests::TEST_BUFFER } {
+    fn from_stdin(buf: &mut String) -> Result<usize, io::Error> {
+        if let Some(test_buffer) = tests::TEST_BUFFER.lock().unwrap().as_ref() {
             *buf = test_buffer.clone();
             Ok(buf.as_bytes().len())
         } else {
-            io::stdin().read_to_string(&mut buf)
+            io::stdin().read_to_string(buf)
         }
     }
 
     fn write_to_file(filename: &str, bytes: &[u8]) -> Result<(), io::Error> {
         if filename == "-" {
-            let buf = std::str::from_utf8(&bytes)
+            let buf = std::str::from_utf8(bytes)
                 .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-            if let Some(test_buffer) = unsafe { &mut self::tests::TEST_BUFFER } {
+            if let Some(test_buffer) = tests::TEST_BUFFER.lock().unwrap().as_mut() {
                 *test_buffer = buf.to_string();
             } else {
                 print!("{}", buf);
@@ -196,7 +196,7 @@ impl Opt {
                 .truncate(true)
                 .write(true)
                 .open(filename)?
-                .write_all(&bytes)
+                .write_all(bytes)
         }
     }
 }
@@ -205,9 +205,10 @@ impl Opt {
 mod tests {
 
     use super::*;
+    use std::sync::Mutex;
 
-    pub(crate) static mut TEST_ARGS: Option<Vec<&str>> = None;
-    pub(crate) static mut TEST_BUFFER: Option<String> = None;
+    pub(crate) static TEST_ARGS: Mutex<Option<Vec<&'static str>>> = Mutex::new(None);
+    pub(crate) static TEST_BUFFER: Mutex<Option<String>> = Mutex::new(None);
 
     #[test]
     fn test_main() {
@@ -310,22 +311,22 @@ mod tests {
   }
 }
 "##;
-        unsafe {
-            TEST_ARGS = Some(vec![
+        {
+            *TEST_ARGS.lock().unwrap() = Some(vec![
                 "formatjson5",
                 "--replace",
-                "--no_trailing_commas",
-                "--one_element_lines",
-                "--sort_arrays",
+                "--no-trailing-commas",
+                "--one-element-lines",
+                "--sort-arrays",
                 "--indent",
                 "2",
                 "-",
             ]);
-            TEST_BUFFER = Some(example_json5.to_string());
+            *TEST_BUFFER.lock().unwrap() = Some(example_json5.to_string());
         }
         main().expect("test failed");
-        assert!(unsafe { &TEST_BUFFER }.is_some());
-        assert_eq!(unsafe { TEST_BUFFER.as_ref().unwrap() }, expected);
+        assert!(TEST_BUFFER.lock().unwrap().is_some());
+        assert_eq!(TEST_BUFFER.lock().unwrap().as_ref().unwrap(), expected);
     }
 
     #[test]

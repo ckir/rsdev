@@ -11,7 +11,32 @@ permissions:
   contents: write
 
 jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git curl build-essential pkg-config libssl-dev libasound2-dev nodejs unzip
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --component clippy
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Lint
+        run: cargo clippy --workspace --exclude json5format --exclude pmdaemon --all-targets --all-features -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --exclude json5format --exclude pmdaemon --all-targets --all-features
+
   build-static:
+    needs: [lint-and-test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -33,6 +58,7 @@ jobs:
           retention-days: 2
 
   build-linux:
+    needs: [lint-and-test]
     strategy:
       fail-fast: false
       matrix:
@@ -91,6 +117,7 @@ jobs:
           retention-days: 2
 
   build-windows:
+    needs: [lint-and-test]
     runs-on: windows-latest
     steps:
       - name: Checkout code

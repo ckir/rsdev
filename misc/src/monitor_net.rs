@@ -1,27 +1,16 @@
 use anyhow::{Context, Result};
-use log::{error, info};
+use lib_common::loggers::loggerlocal::LoggerLocal;
 use rodio::{Decoder, OutputStreamBuilder, Sink};
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::time::{Duration, Instant};
 use tokio::net::TcpStream;
+use tracing::{error, info};
 
 fn setup_logging() -> Result<()> {
-    fern::Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
-                record.target(),
-                record.level(),
-                message
-            ))
-        })
-        .level(log::LevelFilter::Info)
-        .chain(std::io::stderr())
-        .chain(fern::log_file("monitor_net.log")?)
-        .apply()?;
+    let logger = LoggerLocal::new("monitor_net".into(), None);
+    logger.init_global();
     Ok(())
 }
 

@@ -8,7 +8,6 @@ use reqwest::{header::{HeaderMap, AUTHORIZATION}, Method, Url};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json;
 
 /// A standardized container for API responses.
 /// 
@@ -34,11 +33,11 @@ pub struct ApiResponse<T> {
 /// authentication tokens, and automatic retries.
 pub struct ApiClient {
     /// The underlying middleware-enabled client.
-    inner: ClientWithMiddleware,
+    pub inner: ClientWithMiddleware,
     /// The base URL to which all relative paths are joined.
-    base_url: Url,
+    pub base_url: Url,
     /// An optional Bearer token used for authorization.
-    auth_token: Option<String>,
+    pub auth_token: Option<String>,
 }
 
 impl ApiClient {
@@ -51,13 +50,13 @@ impl ApiClient {
     /// # Panics
     /// Panics if the `base_url` is not a valid absolute URL.
     pub fn new(base_url: &str, auth_token: Option<String>) -> Self {
-        // Parse the base URL to ensure it is valid and absolute
+        // // Parse the base URL to ensure it is valid and absolute
         let url = Url::parse(base_url).expect("Invalid Base URL (must be absolute)");
         
-        // Configure an exponential backoff policy with 3 retries
+        // // Configure an exponential backoff policy with 3 retries
         let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
         
-        // Construct the client with the retry middleware
+        // // Construct the client with the retry middleware
         let client = ClientBuilder::new(reqwest::Client::new())
             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
             .build();
@@ -93,37 +92,36 @@ impl ApiClient {
         T: DeserializeOwned,
         B: Serialize,
     {
-        // 1. Construct the full absolute URL
+        // // 1. Construct the full absolute URL
         let full_url = self.base_url.join(path)?;
         let mut req = self.inner.request(method, full_url);
 
-        // 2. Add Custom Headers if provided
+        // // 2. Add Custom Headers if provided
         if let Some(h) = headers {
             req = req.headers(h);
         }
 
-        // 3. Inject Bearer Authentication if a token is present
+        // // 3. Inject Bearer Authentication if a token is present
         if let Some(token) = &self.auth_token {
             req = req.header(AUTHORIZATION, format!("Bearer {}", token));
         }
 
-        // 4. Serialize and attach the JSON body if present
+        // // 4. Serialize and attach the JSON body if present
         if let Some(b) = body {
             use reqwest::header::CONTENT_TYPE;
             let json_body = serde_json::to_string(&b)?;
             req = req.header(CONTENT_TYPE, "application/json").body(json_body);
         }
 
-        // 5. Execute the request and capture response metadata
-        // Explicitly type the response to fix previous inference errors
+        // // 5. Execute the request and capture response metadata
         let response: reqwest::Response = req.send().await?;
         let status = response.status();
         let resp_headers = response.headers().clone();
         let success = status.is_success();
 
-        // 6. Handle the result based on success status
+        // // 6. Handle the result based on success status
         if success {
-            // Attempt to deserialize the body into the target type T
+            // // Attempt to deserialize the body into the target type T
             let data = response.json::<T>().await?;
             Ok(ApiResponse {
                 data: Some(data),
@@ -133,7 +131,7 @@ impl ApiClient {
                 headers: resp_headers,
             })
         } else {
-            // Capture the error body as a string for debugging
+            // // Capture the error body as a string for debugging
             let error_text = response.text().await.ok();
             Ok(ApiResponse {
                 data: None,
@@ -143,5 +141,32 @@ impl ApiClient {
                 headers: resp_headers,
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::Value;
+
+    #[test]
+    fn test_api_client_new() {
+        let client = ApiClient::new("https://api.test.com/", Some("token".to_string()));
+        assert_eq!(client.base_url.as_str(), "https://api.test.com/");
+        assert_eq!(client.auth_token, Some("token".to_string()));
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid Base URL")]
+    fn test_api_client_new_invalid_url() {
+        ApiClient::new("not_a_url", None);
+    }
+
+    #[tokio::test]
+    async fn test_api_client_request_failure() {
+        let client = ApiClient::new("https://invalid.domain.that.does.not.exist/", None);
+        // // This should fail during the send() call
+        let result: anyhow::Result<ApiResponse<Value>> = client.request::<Value, Value>(Method::GET, "path", None, None).await;
+        assert!(result.is_err());
     }
 }

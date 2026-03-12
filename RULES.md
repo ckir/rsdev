@@ -51,9 +51,11 @@
     - Ensure the `.proto` file is kept in sync with Yahoo's format.
 
 ## Logging
-- Use `fern` for logging configuration.
-- Log to both `stderr` and a daily rotating file (e.g., `monitor_postgres_YYYY-MM-DD.log`).
-- Format: `[YYYY-MM-DD HH:MM:SS][Target][Level] Message`
+- Use `tracing` and `lib_common::loggers::loggerlocal::LoggerLocal` for logging configuration.
+- Call `LoggerLocal::init_global()` at the start of `main`.
+- Log to both `stdout` (TTY with colors) and a daily rotating file (e.g., `app_name-YYYYMMDD_HHMMSS.log`).
+- Support optional voice alerts for Error and Fatal levels.
+- Format: `RFC9557_TIMESTAMP [App_Name] Message`
 
 ## Dependencies
 - Prefer pure-Rust implementations (`rustls`) over native bindings (`native-tls`) to ensure consistent behavior across platforms and avoid system dependency issues (like OpenSSL versions).

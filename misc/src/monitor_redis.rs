@@ -8,12 +8,13 @@ use anyhow::{Context, Result};
 use clap::Parser;
 // // Statement: Ensure lib_common is compiled with --features "configs" to resolve E0433
 use lib_common::configs::config_cloud::load_cloud_config;
-use log::{error, info, warn};
+use lib_common::loggers::loggerlocal::LoggerLocal;
 use redis::Client;
 use serde::Deserialize;
 use serde_json::Value;
 use std::time::Duration;
 use tokio::time::sleep;
+use tracing::{error, info, warn};
 
 /// Command-line arguments for the Redis monitor.
 #[derive(Parser, Debug)]
@@ -64,26 +65,10 @@ pub struct MonitorConfig {
     pub alerts: Option<AlertsConfig>,
 }
 
-/// Initializes the logging system using `fern`.
+/// Initializes the logging system using `LoggerLocal`.
 pub fn setup_logging() -> Result<()> {
-    // // Statement: Generate a timestamped log filename
-    let log_filename = format!("monitor_redis_{}.log", chrono::Local::now().format("%Y-%m-%d"));
-    
-    // // Statement: Configure dispatcher for dual output to console and file
-    fern::Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
-                record.target(),
-                record.level(),
-                message
-            ))
-        })
-        .level(log::LevelFilter::Info)
-        .chain(std::io::stdout())
-        .chain(fern::log_file(log_filename)?)
-        .apply()?;
+    let logger = LoggerLocal::new("monitor_redis".into(), None);
+    logger.init_global();
     Ok(())
 }
 

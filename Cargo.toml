@@ -21,9 +21,6 @@ lto = true
 codegen-units = 1
 panic = "abort"
 
-[profile.dev.package.json5format]
-cap-lints = "allow"
-
 [profile.dev]
 opt-level = 0
 debug = true
@@ -96,7 +93,6 @@ age = "0.10"
 # LOGGING, TRACING & ERROR HANDLING
 log = "0.4.27"
 env_logger = "0.11.8"
-fern = "0.7.1"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
 tracing-appender = "0.2.3"

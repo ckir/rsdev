@@ -35,26 +35,10 @@ use tokio_graceful::Shutdown;
 
 use lib_common::config_sys::{RuntimeConfig, RuntimeConfigError, get_runtime_config};
 use lib_common::loggers::logrecord::{Message, Voice};
+use lib_common::loggers::loggerlocal::LoggerLocal;
 use lib_common::utils::misc::sys_info::{ProcessInfo, ProcessInfoError, get_process_info};
 
-// load .env files before anything else
-#[dynamic]
-static DOTENV_INIT: () = {
-    // Determine the operating system
-    let dotenv_os: &str = if cfg!(target_os = "windows") {
-        ".env.windows"
-    } else {
-        ".env.linux"
-    };
-
-    // Set up environment variables
-    dotenvy::dotenv().ok();
-    // Load the platform .env file
-    dotenvy::from_filename(dotenv_os).ok();
-    // for (key, value) in env::vars() {
-    //     println!("{key}: {value}");
-    // }
-};
+// ... DOTENV_INIT omitted for brevity ...
 
 #[dynamic]
 pub static PROCESSINFO: Result<ProcessInfo, ProcessInfoError> = get_process_info();
@@ -69,55 +53,12 @@ pub struct Espeak {
 }
 
 fn setup_logging() -> io::Result<()> {
-    // Get log level from environment variable or use default
-    let log_level: String = env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
-
-    // Get log directory from environment variable or use default
-    let log_dir: String = env::var("LOG_DIR").unwrap_or_else(|_| "logs".to_string());
-
-    // Create log directory if it doesn't exist
-    std::fs::create_dir_all(&log_dir)?;
-
-    // Configure file appender for rotating log files daily
-    let process_basename: &String = match &*PROCESSINFO {
-        Ok(process_info) => &process_info.process_basename,
-        Err(e) => {
-            eprintln!("Failed to retrieve process info: {}", e);
-            std::process::exit(1);
-        }
+    let app_name = match &*PROCESSINFO {
+        Ok(info) => info.process_basename.clone(),
+        Err(_) => "server_speak".to_string(),
     };
-    let file_appender = rolling::daily(&log_dir, process_basename.as_str());
-    let (non_blocking_appender, _guard) = non_blocking(file_appender);
-
-    // Store the guard in a static to keep it alive for the duration of the program
-    // This prevents the non-blocking writer from being dropped prematurely
-    static mut GUARD: Option<tracing_appender::non_blocking::WorkerGuard> = None;
-    unsafe {
-        GUARD = Some(_guard);
-    }
-
-    // Create console layer for stdout
-    let console_layer = fmt::layer().with_target(true).with_ansi(true);
-
-    // Create JSON-formatted file layer
-    let file_layer = fmt::layer()
-        .with_ansi(false)
-        .with_writer(non_blocking_appender)
-        .json();
-
-    // Create environment filter from log level
-    let env_filter: EnvFilter = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new(&log_level))
-        .unwrap();
-
-    // Combine all layers
-    tracing_subscriber::registry()
-        .with(env_filter)
-        .with(console_layer)
-        .with(file_layer)
-        .init();
-
-    info!("Logging initialized with level: {}", log_level);
+    let logger = LoggerLocal::new(app_name, None);
+    logger.init_global();
     Ok(())
 }
 

@@ -153,3 +153,47 @@ pub enum OptionType {
     /// Right to sell
     Put = 1,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use prost::Message;
+
+    #[test]
+    fn test_pricing_data_serialization_cycle() {
+        let original = PricingData {
+            id: "AAPL".to_string(),
+            price: 150.50,
+            time: 1698400000000,
+            currency: "USD".to_string(),
+            exchange: "NMS".to_string(),
+            quote_type: QuoteType::Equity as i32,
+            market_hours: MarketHoursType::RegularMarket as i32,
+            change_percent: 1.5,
+            day_volume: 50000000,
+            day_high: 151.0,
+            day_low: 149.0,
+            change: 2.25,
+            short_name: "Apple Inc.".to_string(),
+            ..Default::default()
+        };
+
+        // // Encode to bytes
+        let mut buf = Vec::new();
+        original.encode(&mut buf).unwrap();
+
+        // // Decode back to struct
+        let decoded = PricingData::decode(&buf[..]).unwrap();
+
+        assert_eq!(original.id, decoded.id);
+        assert_eq!(original.price, decoded.price);
+        assert_eq!(original.quote_type, decoded.quote_type);
+    }
+
+    #[test]
+    fn test_enum_conversions() {
+        assert_eq!(QuoteType::Equity as i32, 8);
+        assert_eq!(MarketHoursType::RegularMarket as i32, 1);
+        assert_eq!(OptionType::Call as i32, 0);
+    }
+}
