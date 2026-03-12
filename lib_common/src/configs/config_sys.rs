@@ -259,10 +259,18 @@ mod tests {
 
     #[test]
     fn test_process_basename() {
-        let path = PathBuf::from("/usr/bin/test_app");
+        let path = if cfg!(windows) {
+            PathBuf::from("C:\\bin\\test_app")
+        } else {
+            PathBuf::from("/usr/bin/test_app")
+        };
         assert_eq!(get_process_basename(path).unwrap(), "test_app");
 
-        let path_with_ext = PathBuf::from("C:\\bin\\test_app.exe");
+        let path_with_ext = if cfg!(windows) {
+            PathBuf::from("C:\\bin\\test_app.exe")
+        } else {
+            PathBuf::from("/usr/bin/test_app.exe")
+        };
         assert_eq!(get_process_basename(path_with_ext).unwrap(), "test_app");
     }
 
